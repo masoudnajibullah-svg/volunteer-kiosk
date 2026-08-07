@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ICNA Volunteers">
+    <title>ICNA Relief — Volunteer Clock In/Out</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- MAIN SCREEN: Volunteer List -->
+    <div id="screen-main" class="screen active">
+        <header class="app-header">
+            <h1>ICNA Relief</h1>
+            <p class="subtitle">Volunteer Clock In / Out</p>
+            <div class="header-info">
+                <span id="current-date" class="date-display"></span>
+                <span id="current-time" class="time-display"></span>
+            </div>
+        </header>
+
+        <div class="search-bar">
+            <input type="text" id="volunteer-search" placeholder="Search your name..." aria-label="Search volunteer name">
+        </div>
+
+        <div class="volunteer-list" id="volunteer-list" role="list" aria-label="Volunteer list">
+            <!-- Populated by JS -->
+        </div>
+
+        <footer class="app-footer">
+            <button id="btn-admin" class="btn btn-small btn-secondary" aria-label="Admin panel">Admin</button>
+            <span class="footer-count" id="footer-count">0 volunteers clocked in</span>
+        </footer>
+    </div>
+
+    <!-- CLOCK IN/OUT SCREEN -->
+    <div id="screen-clockaction" class="screen">
+        <header class="app-header">
+            <h1>ICNA Relief</h1>
+        </header>
+
+        <div class="action-container">
+            <h2 id="action-volunteer-name" class="action-name"></h2>
+            <p id="action-status" class="action-status"></p>
+
+            <div class="action-buttons">
+                <button id="btn-clock-in" class="btn btn-large btn-clock-in" aria-label="Clock In">Clock In</button>
+                <button id="btn-clock-out" class="btn btn-large btn-clock-out" aria-label="Clock Out">Clock Out</button>
+            </div>
+
+            <button id="btn-back" class="btn btn-medium btn-secondary" aria-label="Go back">Back</button>
+        </div>
+    </div>
+
+    <!-- CONFIRMATION SCREEN -->
+    <div id="screen-confirmation" class="screen">
+        <header class="app-header">
+            <h1>ICNA Relief</h1>
+        </header>
+
+        <div class="confirmation-container">
+            <div class="confirmation-icon" id="confirmation-icon" aria-hidden="true"></div>
+            <h2 id="confirmation-message" class="confirmation-message"></h2>
+            <p id="confirmation-time" class="confirmation-time"></p>
+        </div>
+    </div>
+
+    <!-- ADMIN PASSWORD SCREEN -->
+    <div id="screen-admin-login" class="screen">
+        <header class="app-header">
+            <h1>ICNA Relief</h1>
+        </header>
+
+        <div class="action-container">
+            <h2 class="action-name">Admin Access</h2>
+            <p class="action-status">Enter the admin password</p>
+
+            <div class="admin-login-form">
+                <input type="password" id="admin-password" class="admin-password-input" placeholder="Password" aria-label="Admin password">
+                <p id="admin-password-error" class="password-error" style="display:none;">Incorrect password</p>
+            </div>
+
+            <div class="action-buttons">
+                <button id="btn-admin-login" class="btn btn-large btn-primary" aria-label="Enter admin">Enter</button>
+            </div>
+
+            <button id="btn-admin-login-back" class="btn btn-medium btn-secondary" aria-label="Go back">Back</button>
+        </div>
+    </div>
+
+    <!-- ADMIN SCREEN -->
+    <div id="screen-admin" class="screen">
+        <header class="app-header">
+            <h1>ICNA Relief — Admin</h1>
+            <button id="btn-admin-back" class="btn btn-small btn-secondary header-back-btn" aria-label="Back to main">Back</button>
+        </header>
+
+        <div class="admin-container">
+            <div class="admin-tabs" role="tablist">
+                <button class="tab active" data-tab="tab-currently-in" role="tab" aria-selected="true">Currently In</button>
+                <button class="tab" data-tab="tab-log" role="tab" aria-selected="false">Today's Log</button>
+                <button class="tab" data-tab="tab-manage" role="tab" aria-selected="false">Manage Volunteers</button>
+                <button class="tab" data-tab="tab-export" role="tab" aria-selected="false">Export Data</button>
+            </div>
+
+            <!-- Currently Clocked In -->
+            <div id="tab-currently-in" class="tab-content active" role="tabpanel">
+                <h3>Volunteers Currently Clocked In</h3>
+                <div id="currently-in-list" class="admin-list"></div>
+            </div>
+
+            <!-- Today's Log -->
+            <div id="tab-log" class="tab-content" role="tabpanel">
+                <h3>Today's Activity Log</h3>
+                <div id="today-log-list" class="admin-list"></div>
+            </div>
+
+            <!-- Manage Volunteers -->
+            <div id="tab-manage" class="tab-content" role="tabpanel">
+                <h3>Add / Remove Volunteers</h3>
+                <div class="manage-add-form">
+                    <input type="text" id="new-volunteer-name" placeholder="Enter volunteer name" aria-label="New volunteer name">
+                    <button id="btn-add-volunteer" class="btn btn-medium btn-primary" aria-label="Add volunteer">Add</button>
+                </div>
+                <div id="manage-volunteer-list" class="admin-list"></div>
+            </div>
+
+            <!-- Export Data -->
+            <div id="tab-export" class="tab-content" role="tabpanel">
+                <h3>Export &amp; Print Records</h3>
+                <p class="export-description">Pick a date range to view, print, or download volunteer hours.</p>
+
+                <div class="date-range-picker">
+                    <div class="date-field">
+                        <label for="export-date-from">From</label>
+                        <input type="date" id="export-date-from" aria-label="Start date">
+                    </div>
+                    <div class="date-field">
+                        <label for="export-date-to">To</label>
+                        <input type="date" id="export-date-to" aria-label="End date">
+                    </div>
+                    <button id="btn-filter-dates" class="btn btn-medium btn-primary" aria-label="Show records">Show</button>
+                </div>
+
+                <div id="filtered-results" class="filtered-results" style="display:none;">
+                    <div class="filtered-summary" id="filtered-summary"></div>
+                    <table class="records-table" id="records-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th>Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-table-body"></tbody>
+                    </table>
+                    <div class="filtered-actions">
+                        <button id="btn-print-filtered" class="btn btn-large btn-primary" aria-label="Print these records">Print</button>
+                        <button id="btn-export-filtered" class="btn btn-large btn-secondary" aria-label="Download CSV">Download CSV</button>
+                    </div>
+                </div>
+
+                <div class="export-options" style="margin-top:1.5rem;">
+                    <button id="btn-export-all" class="btn btn-medium btn-secondary" aria-label="Export all records">Export All Records (CSV)</button>
+                </div>
+
+                <div id="export-stats" class="export-stats"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
