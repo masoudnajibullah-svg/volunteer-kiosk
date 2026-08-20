@@ -16,6 +16,7 @@ body {
     background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
     color: #1e293b;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
@@ -26,6 +27,7 @@ body {
     display: none;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     width: 100vw;
     position: fixed;
     top: 0;
@@ -173,6 +175,9 @@ body {
     background: #ffffff;
     border-top: 1px solid rgba(0,0,0,0.06);
     flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
 }
 
 .footer-count {
@@ -680,6 +685,19 @@ body {
 
     .unlock-icon {
         font-size: 3rem;
+    }
+
+    .app-footer {
+        padding: 0.8rem 1rem;
+    }
+
+    .app-footer .btn-small {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .footer-count {
+        font-size: 0.85rem;
     }
 }
 
