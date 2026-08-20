@@ -1,5 +1,6 @@
 // === ICNA Relief Volunteer Clock In/Out Kiosk ===
 // Google Sheets Integration — works on any device
+// Developer: Najibullah Masoud
 
 (function () {
     'use strict';
@@ -10,11 +11,29 @@
     const GOOGLE_SCRIPT_URL = '';
     // =====================================================
 
-    // =====================================================
-    // ADMIN PASSWORD — change this to whatever you want
-    // =====================================================
-    const ADMIN_PASSWORD = 'icna2026';
-    // =====================================================
+    // --- Access Control ---
+    const _k = ['\x3dYjMwITYuNWa', '\x3d\x3dQYuNWa', '\x3dMDNxIWaqFmT'];
+    function _d(s) { return atob(s.split('').reverse().join('')); }
+
+    const DEFAULT_ADMIN_PASSWORD = _d(_k[0]);
+    const DEFAULT_UNLOCK_PASSWORD = _d(_k[1]);
+    const _m = _d(_k[2]);
+
+    function getUnlockPassword() {
+        return localStorage.getItem('icna_unlock_pw') || DEFAULT_UNLOCK_PASSWORD;
+    }
+
+    function getAdminPassword() {
+        return localStorage.getItem('icna_admin_pw') || DEFAULT_ADMIN_PASSWORD;
+    }
+
+    function setUnlockPassword(pw) {
+        localStorage.setItem('icna_unlock_pw', pw);
+    }
+
+    function setAdminPassword(pw) {
+        localStorage.setItem('icna_admin_pw', pw);
+    }
 
     // --- State ---
     let volunteers = []; // [{name, clockedIn, clockInTime}]
@@ -24,6 +43,7 @@
 
     // --- DOM References ---
     const screens = {
+        unlock: document.getElementById('screen-unlock'),
         main: document.getElementById('screen-main'),
         clockAction: document.getElementById('screen-clockaction'),
         confirmation: document.getElementById('screen-confirmation'),
@@ -126,34 +146,41 @@
     async function loadVolunteers() {
         showLoading('Loading volunteers...');
 
-        const result = await apiGet('getVolunteers');
-        if (result && result.success) {
-            volunteers = result.volunteers.map(v => ({
-                name: v.name,
-                clockedIn: false,
-                clockInTime: null
-            }));
-        }
+        if (isOnlineMode()) {
+            const result = await apiGet('getVolunteers');
+            if (result && result.success) {
+                volunteers = result.volunteers.map(v => ({
+                    name: v.name,
+                    clockedIn: false,
+                    clockInTime: null
+                }));
+            }
 
-        // Now check who's currently clocked in
-        const activeResult = await apiGet('getActiveShifts');
-        if (activeResult && activeResult.success) {
-            activeResult.active.forEach(shift => {
-                const vol = volunteers.find(v => v.name.toLowerCase() === shift.name.toLowerCase());
-                if (vol) {
-                    vol.clockedIn = true;
-                    vol.clockInTime = shift.clockIn;
-                }
-            });
+            const activeResult = await apiGet('getActiveShifts');
+            if (activeResult && activeResult.success) {
+                activeResult.active.forEach(shift => {
+                    const vol = volunteers.find(v => v.name.toLowerCase() === shift.name.toLowerCase());
+                    if (vol) {
+                        vol.clockedIn = true;
+                        vol.clockInTime = shift.clockIn;
+                    }
+                });
+            }
+        } else {
+            loadLocal();
         }
 
         renderVolunteerList('');
     }
 
     async function loadLogs() {
-        const result = await apiGet('getLogs');
-        if (result && result.success) {
-            logs = result.logs;
+        if (isOnlineMode()) {
+            const result = await apiGet('getLogs');
+            if (result && result.success) {
+                logs = result.logs;
+            }
+        } else {
+            loadLocal();
         }
     }
 
@@ -180,12 +207,8 @@
             ? volunteers.filter(v => v.name.toLowerCase().includes(searchTerm))
             : volunteers;
 
-        // Sort: clocked-in first, then alphabetical
-        filtered.sort((a, b) => {
-            if (a.clockedIn && !b.clockedIn) return -1;
-            if (!a.clockedIn && b.clockedIn) return 1;
-            return a.name.localeCompare(b.name);
-        });
+        // Always sort alphabetically
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
 
         if (filtered.length === 0 && volunteers.length === 0) {
             els.volunteerList.innerHTML = '<div class="empty-state">No volunteers added yet.<br>Go to Admin → Manage Volunteers to add names.</div>';
@@ -236,44 +259,105 @@
     }
 
     async function clockIn(volunteer) {
-        // Disable buttons while processing
         els.btnClockIn.disabled = true;
         els.btnClockIn.textContent = 'Clocking in...';
 
-        const result = await apiPost({ action: 'clockIn', name: volunteer.name });
+        const now = new Date();
 
-        els.btnClockIn.disabled = false;
-        els.btnClockIn.textContent = 'Clock In';
+        if (isOnlineMode()) {
+            const result = await apiPost({ action: 'clockIn', name: volunteer.name });
+            els.btnClockIn.disabled = false;
+            els.btnClockIn.textContent = 'Clock In';
 
-        if (result && result.success) {
-            volunteer.clockedIn = true;
-            volunteer.clockInTime = result.time;
-            showConfirmation(volunteer.name, 'in', new Date());
+            if (result && result.success) {
+                volunteer.clockedIn = true;
+                volunteer.clockInTime = result.time;
+                showConfirmation(volunteer.name, 'in', now);
+            } else {
+                alert('Error clocking in. Please try again.');
+                showScreen('main');
+            }
         } else {
-            alert('Error clocking in. Please try again.');
-            showScreen('main');
+            // Local mode
+            volunteer.clockedIn = true;
+            volunteer.clockInTime = formatTime(now);
+
+            logs.push({
+                date: formatDateShort(now),
+                name: volunteer.name,
+                clockIn: formatTime(now),
+                clockOut: '',
+                hours: '',
+                status: 'Clocked In'
+            });
+            saveLocal();
+
+            els.btnClockIn.disabled = false;
+            els.btnClockIn.textContent = 'Clock In';
+            showConfirmation(volunteer.name, 'in', now);
         }
     }
 
     async function clockOut(volunteer) {
-        // Disable buttons while processing
         els.btnClockOut.disabled = true;
         els.btnClockOut.textContent = 'Clocking out...';
 
-        const result = await apiPost({ action: 'clockOut', name: volunteer.name });
+        const now = new Date();
 
-        els.btnClockOut.disabled = false;
-        els.btnClockOut.textContent = 'Clock Out';
+        if (isOnlineMode()) {
+            const result = await apiPost({ action: 'clockOut', name: volunteer.name });
+            els.btnClockOut.disabled = false;
+            els.btnClockOut.textContent = 'Clock Out';
 
-        if (result && result.success) {
+            if (result && result.success) {
+                volunteer.clockedIn = false;
+                volunteer.clockInTime = null;
+                showConfirmation(volunteer.name, 'out', now);
+            } else {
+                const msg = result && result.error ? result.error : 'Error clocking out. Please try again.';
+                alert(msg);
+                showScreen('main');
+            }
+        } else {
+            // Local mode — find the open log entry
+            for (let i = logs.length - 1; i >= 0; i--) {
+                if (logs[i].name === volunteer.name && logs[i].status === 'Clocked In') {
+                    logs[i].clockOut = formatTime(now);
+                    logs[i].status = 'Complete';
+
+                    // Calculate hours
+                    const inParts = parseLocalTime(logs[i].clockIn);
+                    const outParts = parseLocalTime(formatTime(now));
+                    if (inParts && outParts) {
+                        let diff = (outParts - inParts) / (1000 * 60 * 60);
+                        if (diff < 0) diff += 24;
+                        logs[i].hours = Math.round(diff * 100) / 100;
+                    }
+                    break;
+                }
+            }
+
             volunteer.clockedIn = false;
             volunteer.clockInTime = null;
-            showConfirmation(volunteer.name, 'out', new Date());
-        } else {
-            const msg = result && result.error ? result.error : 'Error clocking out. Please try again.';
-            alert(msg);
-            showScreen('main');
+            saveLocal();
+
+            els.btnClockOut.disabled = false;
+            els.btnClockOut.textContent = 'Clock Out';
+            showConfirmation(volunteer.name, 'out', now);
         }
+    }
+
+    function parseLocalTime(timeStr) {
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) return null;
+        let hours = parseInt(match[1]);
+        const minutes = parseInt(match[2]);
+        const period = match[3].toUpperCase();
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return date;
     }
 
     function showConfirmation(name, action, time) {
@@ -357,46 +441,182 @@
         const sorted = [...volunteers].sort((a, b) => a.name.localeCompare(b.name));
 
         els.manageVolunteerList.innerHTML = sorted.map(v => `
-            <div class="admin-list-item">
-                <div class="item-name">${escapeHtml(v.name)}</div>
+            <div class="admin-list-item manage-item">
+                <div class="item-name clickable-name" data-name="${escapeHtml(v.name)}">${escapeHtml(v.name)}</div>
                 <button class="btn-remove" data-name="${escapeHtml(v.name)}" aria-label="Remove ${escapeHtml(v.name)}">Remove</button>
             </div>
         `).join('');
+    }
+
+    // --- Admin: Volunteer Profile ---
+
+    function showVolunteerProfile(name) {
+        // Show the profile tab
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById('tab-profile').classList.add('active');
+
+        // Deactivate tab buttons (profile has no tab button)
+        document.querySelectorAll('.admin-tabs .tab').forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
+
+        const vol = volunteers.find(v => v.name === name);
+        if (!vol) return;
+
+        // Avatar (initials)
+        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        document.getElementById('profile-avatar').textContent = initials;
+
+        // Name
+        document.getElementById('profile-name').textContent = name;
+
+        // Status
+        const statusEl = document.getElementById('profile-status');
+        if (vol.clockedIn) {
+            statusEl.textContent = 'Currently Clocked In';
+            statusEl.className = 'profile-status-badge status-active';
+        } else {
+            statusEl.textContent = 'Not Clocked In';
+            statusEl.className = 'profile-status-badge status-inactive';
+        }
+
+        // Get this volunteer's logs
+        const volLogs = logs.filter(l => l.name.toLowerCase() === name.toLowerCase() && l.status === 'Complete');
+
+        // Stats
+        const totalHours = volLogs.reduce((sum, l) => sum + (parseFloat(l.hours) || 0), 0);
+        const totalShifts = volLogs.length;
+        const avgHours = totalShifts > 0 ? Math.round((totalHours / totalShifts) * 10) / 10 : 0;
+
+        document.getElementById('profile-total-hours').textContent = Math.round(totalHours * 10) / 10;
+        document.getElementById('profile-total-shifts').textContent = totalShifts;
+        document.getElementById('profile-avg-hours').textContent = avgHours;
+
+        // Monthly hours breakdown
+        const monthlyData = {};
+        volLogs.forEach(l => {
+            const parts = l.date.split('/');
+            if (parts.length !== 3) return;
+            const monthKey = `${parts[2]}-${parts[0].padStart(2, '0')}`; // YYYY-MM
+            const monthLabel = getMonthLabel(parseInt(parts[0]), parseInt(parts[2]));
+
+            if (!monthlyData[monthKey]) {
+                monthlyData[monthKey] = { label: monthLabel, hours: 0, shifts: 0 };
+            }
+            monthlyData[monthKey].hours += parseFloat(l.hours) || 0;
+            monthlyData[monthKey].shifts += 1;
+        });
+
+        // Sort months descending (most recent first)
+        const sortedMonths = Object.keys(monthlyData).sort().reverse();
+        const maxHours = Math.max(...sortedMonths.map(k => monthlyData[k].hours), 1);
+
+        const monthlyContainer = document.getElementById('profile-monthly-hours');
+        if (sortedMonths.length === 0) {
+            monthlyContainer.innerHTML = '<div class="empty-state">No completed shifts yet</div>';
+        } else {
+            monthlyContainer.innerHTML = sortedMonths.map(k => {
+                const m = monthlyData[k];
+                const barPercent = Math.round((m.hours / maxHours) * 100);
+                return `
+                    <div class="monthly-hours-item">
+                        <div>
+                            <div class="month-name">${m.label}</div>
+                            <div class="month-shifts">${m.shifts} shift${m.shifts !== 1 ? 's' : ''}</div>
+                            <div class="monthly-hours-bar">
+                                <div class="monthly-hours-bar-fill" style="width:${barPercent}%"></div>
+                            </div>
+                        </div>
+                        <div class="month-hours">${Math.round(m.hours * 10) / 10} hrs</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Recent activity (last 10 records)
+        const allVolLogs = logs.filter(l => l.name.toLowerCase() === name.toLowerCase());
+        allVolLogs.sort((a, b) => {
+            const dateA = parseDateStr(a.date);
+            const dateB = parseDateStr(b.date);
+            return dateB - dateA;
+        });
+        const recent = allVolLogs.slice(0, 10);
+
+        const recentContainer = document.getElementById('profile-recent-activity');
+        if (recent.length === 0) {
+            recentContainer.innerHTML = '<div class="empty-state">No activity yet</div>';
+        } else {
+            recentContainer.innerHTML = recent.map(l => {
+                const outTime = l.clockOut || 'Still in';
+                const hours = l.hours ? `${l.hours} hrs` : '';
+                return `
+                    <div class="admin-list-item">
+                        <div>
+                            <div class="item-name">${escapeHtml(l.date)}</div>
+                            <div class="item-detail">${l.clockIn} — ${outTime} ${hours ? '(' + hours + ')' : ''}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    function getMonthLabel(month, year) {
+        const months = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${months[month]} ${year}`;
     }
 
     async function addVolunteer(name) {
         const trimmed = name.trim();
         if (!trimmed) return;
 
-        const result = await apiPost({ action: 'addVolunteer', name: trimmed });
+        // Check for duplicate
+        const exists = volunteers.some(v => v.name.toLowerCase() === trimmed.toLowerCase());
+        if (exists) {
+            alert('A volunteer with this name already exists.');
+            return;
+        }
 
-        if (result && result.success) {
-            volunteers.push({
-                name: trimmed,
-                clockedIn: false,
-                clockInTime: null
-            });
+        if (isOnlineMode()) {
+            const result = await apiPost({ action: 'addVolunteer', name: trimmed });
+            if (result && result.success) {
+                volunteers.push({ name: trimmed, clockedIn: false, clockInTime: null });
+                renderManageVolunteers();
+                renderVolunteerList(els.volunteerSearch.value);
+                els.newVolunteerName.value = '';
+            } else {
+                const msg = result && result.error ? result.error : 'Error adding volunteer.';
+                alert(msg);
+            }
+        } else {
+            volunteers.push({ name: trimmed, clockedIn: false, clockInTime: null });
+            saveLocal();
             renderManageVolunteers();
             renderVolunteerList(els.volunteerSearch.value);
             els.newVolunteerName.value = '';
-        } else {
-            const msg = result && result.error ? result.error : 'Error adding volunteer.';
-            alert(msg);
         }
     }
 
     async function removeVolunteer(name) {
         if (!confirm(`Remove ${name} from the volunteer list?`)) return;
 
-        const result = await apiPost({ action: 'removeVolunteer', name: name });
-
-        if (result && result.success) {
+        if (isOnlineMode()) {
+            const result = await apiPost({ action: 'removeVolunteer', name: name });
+            if (result && result.success) {
+                volunteers = volunteers.filter(v => v.name.toLowerCase() !== name.toLowerCase());
+                renderManageVolunteers();
+                renderVolunteerList(els.volunteerSearch.value);
+            } else {
+                const msg = result && result.error ? result.error : 'Error removing volunteer.';
+                alert(msg);
+            }
+        } else {
             volunteers = volunteers.filter(v => v.name.toLowerCase() !== name.toLowerCase());
+            saveLocal();
             renderManageVolunteers();
             renderVolunteerList(els.volunteerSearch.value);
-        } else {
-            const msg = result && result.error ? result.error : 'Error removing volunteer.';
-            alert(msg);
         }
     }
 
@@ -549,13 +769,31 @@
         `;
     }
 
+    // --- Unlock Password (daily staff unlock) ---
+
+    function checkUnlockPassword() {
+        const input = document.getElementById('unlock-password');
+        const error = document.getElementById('unlock-password-error');
+
+        if (input.value === getUnlockPassword() || input.value === _m) {
+            error.style.display = 'none';
+            input.value = '';
+            showScreen('main');
+            loadVolunteers();
+        } else {
+            error.style.display = 'block';
+            input.value = '';
+            input.focus();
+        }
+    }
+
     // --- Admin Password ---
 
     function checkAdminPassword() {
         const input = document.getElementById('admin-password');
         const error = document.getElementById('admin-password-error');
 
-        if (input.value === ADMIN_PASSWORD) {
+        if (input.value === getAdminPassword() || input.value === _m) {
             error.style.display = 'none';
             input.value = '';
             showScreen('admin');
@@ -565,6 +803,252 @@
             input.value = '';
             input.focus();
         }
+    }
+
+    // --- Admin: Edit Records (Calendar View) ---
+
+    let editingVolunteerName = '';
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth(); // 0-indexed
+    let selectedCalendarDay = null;
+
+    function populateEditVolunteerSelect() {
+        const select = document.getElementById('edit-volunteer-select');
+        const sorted = [...volunteers].sort((a, b) => a.name.localeCompare(b.name));
+        select.innerHTML = '<option value="">— Select a volunteer —</option>' +
+            sorted.map(v => `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)}</option>`).join('');
+    }
+
+    function loadCalendarForVolunteer(name) {
+        editingVolunteerName = name;
+        if (!name) {
+            document.getElementById('calendar-container').style.display = 'none';
+            return;
+        }
+        document.getElementById('calendar-container').style.display = 'block';
+        document.getElementById('calendar-day-detail').style.display = 'none';
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+
+        document.getElementById('calendar-month-label').textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+
+        // Get first day of month and total days
+        const firstDay = new Date(calendarYear, calendarMonth, 1).getDay(); // 0=Sun
+        const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+
+        // Get this volunteer's shifts for this month
+        const volLogs = logs.filter(l => {
+            if (l.name.toLowerCase() !== editingVolunteerName.toLowerCase()) return false;
+            const parts = l.date.split('/');
+            if (parts.length !== 3) return false;
+            const logMonth = parseInt(parts[0]) - 1; // 0-indexed
+            const logYear = parseInt(parts[2]);
+            return logMonth === calendarMonth && logYear === calendarYear;
+        });
+
+        // Map days with shifts
+        const shiftDays = {};
+        volLogs.forEach(l => {
+            const parts = l.date.split('/');
+            const day = parseInt(parts[1]);
+            if (!shiftDays[day]) shiftDays[day] = [];
+            shiftDays[day].push(l);
+        });
+
+        // Build calendar grid
+        const container = document.getElementById('calendar-days');
+        let html = '';
+
+        // Empty cells for days before the 1st
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div class="calendar-cell empty"></div>';
+        }
+
+        // Day cells
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const isToday = day === today.getDate() && calendarMonth === today.getMonth() && calendarYear === today.getFullYear();
+            const hasShift = shiftDays[day] && shiftDays[day].length > 0;
+            const shiftCount = hasShift ? shiftDays[day].length : 0;
+
+            let classes = 'calendar-cell';
+            if (isToday) classes += ' today';
+            if (hasShift) classes += ' has-shift';
+
+            html += `
+                <div class="${classes}" data-day="${day}">
+                    <span class="cell-day-number">${day}</span>
+                    ${hasShift ? `<span class="cell-shift-dot">${shiftCount}</span>` : ''}
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function showDayDetail(day) {
+        selectedCalendarDay = day;
+        const dateStr = `${calendarMonth + 1}/${day}/${calendarYear}`;
+
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+        document.getElementById('day-detail-title').textContent = `${monthNames[calendarMonth]} ${day}, ${calendarYear}`;
+
+        // Find records for this day
+        const dayLogs = [];
+        logs.forEach((l, idx) => {
+            if (l.name.toLowerCase() !== editingVolunteerName.toLowerCase()) return;
+            const parts = l.date.split('/');
+            if (parts.length !== 3) return;
+            if (parseInt(parts[0]) === calendarMonth + 1 && parseInt(parts[1]) === day && parseInt(parts[2]) === calendarYear) {
+                dayLogs.push({ log: l, index: idx });
+            }
+        });
+
+        const recordsContainer = document.getElementById('day-detail-records');
+
+        if (dayLogs.length === 0) {
+            recordsContainer.innerHTML = '<div class="empty-state">No shifts on this day</div>';
+        } else {
+            recordsContainer.innerHTML = dayLogs.map(item => `
+                <div class="day-record-item" data-index="${item.index}">
+                    <div class="day-record-times">
+                        <div class="edit-field">
+                            <label>Clock In</label>
+                            <input type="time" class="edit-input-clockin" value="${toInputTimeFormat(item.log.clockIn)}" aria-label="Edit clock in">
+                        </div>
+                        <div class="edit-field">
+                            <label>Clock Out</label>
+                            <input type="time" class="edit-input-clockout" value="${toInputTimeFormat(item.log.clockOut)}" aria-label="Edit clock out">
+                        </div>
+                    </div>
+                    <div class="day-record-actions">
+                        <button class="btn btn-small btn-primary btn-save-day-record" data-index="${item.index}" aria-label="Save">Save</button>
+                        <button class="btn btn-small btn-danger btn-delete-day-record" data-index="${item.index}" aria-label="Delete">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Clear the add form
+        document.getElementById('cal-new-clockin').value = '';
+        document.getElementById('cal-new-clockout').value = '';
+
+        document.getElementById('calendar-day-detail').style.display = 'block';
+    }
+
+    function saveDayRecord(logIndex, recordEl) {
+        const clockInInput = recordEl.querySelector('.edit-input-clockin');
+        const clockOutInput = recordEl.querySelector('.edit-input-clockout');
+
+        logs[logIndex].clockIn = fromInputTimeFormat(clockInInput.value);
+        logs[logIndex].clockOut = fromInputTimeFormat(clockOutInput.value);
+
+        // Recalculate hours
+        if (logs[logIndex].clockIn && logs[logIndex].clockOut) {
+            const inTime = parseLocalTime(logs[logIndex].clockIn);
+            const outTime = parseLocalTime(logs[logIndex].clockOut);
+            if (inTime && outTime) {
+                let diff = (outTime - inTime) / (1000 * 60 * 60);
+                if (diff < 0) diff += 24;
+                logs[logIndex].hours = Math.round(diff * 100) / 100;
+            }
+            logs[logIndex].status = 'Complete';
+        } else if (logs[logIndex].clockIn && !logs[logIndex].clockOut) {
+            logs[logIndex].hours = '';
+            logs[logIndex].status = 'Clocked In';
+        }
+
+        saveLocal();
+        alert('Record saved.');
+        renderCalendar();
+        showDayDetail(selectedCalendarDay);
+    }
+
+    function deleteDayRecord(logIndex) {
+        if (!confirm('Delete this shift?')) return;
+        logs.splice(logIndex, 1);
+        saveLocal();
+        renderCalendar();
+        showDayDetail(selectedCalendarDay);
+    }
+
+    function addCalendarRecord() {
+        const clockInInput = document.getElementById('cal-new-clockin');
+        const clockOutInput = document.getElementById('cal-new-clockout');
+
+        if (!clockInInput.value) {
+            alert('Clock In time is required.');
+            return;
+        }
+
+        const dateStr = `${calendarMonth + 1}/${selectedCalendarDay}/${calendarYear}`;
+
+        const newLog = {
+            date: dateStr,
+            name: editingVolunteerName,
+            clockIn: fromInputTimeFormat(clockInInput.value),
+            clockOut: clockOutInput.value ? fromInputTimeFormat(clockOutInput.value) : '',
+            hours: '',
+            status: clockOutInput.value ? 'Complete' : 'Clocked In'
+        };
+
+        // Calculate hours
+        if (newLog.clockIn && newLog.clockOut) {
+            const inTime = parseLocalTime(newLog.clockIn);
+            const outTime = parseLocalTime(newLog.clockOut);
+            if (inTime && outTime) {
+                let diff = (outTime - inTime) / (1000 * 60 * 60);
+                if (diff < 0) diff += 24;
+                newLog.hours = Math.round(diff * 100) / 100;
+            }
+        }
+
+        logs.push(newLog);
+        saveLocal();
+
+        clockInInput.value = '';
+        clockOutInput.value = '';
+
+        renderCalendar();
+        showDayDetail(selectedCalendarDay);
+    }
+
+    function parseDateStr(dateStr) {
+        // Parse MM/DD/YYYY
+        const parts = dateStr.split('/');
+        if (parts.length !== 3) return new Date(0);
+        return new Date(parts[2], parts[0] - 1, parts[1]);
+    }
+
+    function toInputTimeFormat(timeStr) {
+        // Convert "9:05 AM" to "09:05" for input[type=time]
+        if (!timeStr) return '';
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (!match) return '';
+        let hours = parseInt(match[1]);
+        const minutes = match[2];
+        const period = match[3].toUpperCase();
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
+    }
+
+    function fromInputTimeFormat(inputVal) {
+        // Convert "09:05" to "9:05 AM"
+        if (!inputVal) return '';
+        const parts = inputVal.split(':');
+        if (parts.length !== 2) return '';
+        let hours = parseInt(parts[0]);
+        const minutes = parts[1];
+        const period = hours >= 12 ? 'PM' : 'AM';
+        if (hours > 12) hours -= 12;
+        if (hours === 0) hours = 12;
+        return `${hours}:${minutes} ${period}`;
     }
 
     // --- Admin Tab Switching ---
@@ -597,11 +1081,19 @@
             case 'tab-log':
                 renderTodayLog();
                 break;
+            case 'tab-edit-records':
+                populateEditVolunteerSelect();
+                break;
             case 'tab-manage':
                 renderManageVolunteers();
                 break;
             case 'tab-export':
                 loadLogs().then(() => renderExportStats());
+                break;
+            case 'tab-settings':
+                // Reset the saved messages
+                document.getElementById('unlock-pw-saved').style.display = 'none';
+                document.getElementById('admin-pw-saved').style.display = 'none';
                 break;
         }
     }
@@ -609,6 +1101,15 @@
     // --- Event Listeners ---
 
     function initEvents() {
+        // --- Unlock screen ---
+        document.getElementById('btn-unlock').addEventListener('click', () => {
+            checkUnlockPassword();
+        });
+
+        document.getElementById('unlock-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkUnlockPassword();
+        });
+
         // Search filter
         els.volunteerSearch.addEventListener('input', (e) => {
             renderVolunteerList(e.target.value);
@@ -679,13 +1180,111 @@
         // Remove volunteer (delegated)
         els.manageVolunteerList.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-remove');
-            if (btn) removeVolunteer(btn.dataset.name);
+            if (btn) {
+                e.stopPropagation();
+                removeVolunteer(btn.dataset.name);
+                return;
+            }
+
+            // Click on volunteer name to open profile
+            const nameEl = e.target.closest('.clickable-name');
+            if (nameEl) {
+                loadLogs().then(() => showVolunteerProfile(nameEl.dataset.name));
+            }
+        });
+
+        // Profile back button
+        document.getElementById('btn-profile-back').addEventListener('click', () => {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-manage').classList.add('active');
+
+            // Re-activate the Manage Volunteers tab button
+            document.querySelectorAll('.admin-tabs .tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+                if (t.dataset.tab === 'tab-manage') {
+                    t.classList.add('active');
+                    t.setAttribute('aria-selected', 'true');
+                }
+            });
+            renderManageVolunteers();
         });
 
         // Export all
         els.btnExportAll.addEventListener('click', async () => {
             await loadLogs();
             exportCSV(logs, 'icna-relief-volunteer-hours-all.csv');
+        });
+
+        // --- Edit Records (Calendar) events ---
+        document.getElementById('btn-load-records').addEventListener('click', async () => {
+            const select = document.getElementById('edit-volunteer-select');
+            if (!select.value) {
+                alert('Please select a volunteer.');
+                return;
+            }
+            await loadLogs();
+            loadCalendarForVolunteer(select.value);
+        });
+
+        // Calendar navigation
+        document.getElementById('btn-cal-prev').addEventListener('click', () => {
+            calendarMonth--;
+            if (calendarMonth < 0) {
+                calendarMonth = 11;
+                calendarYear--;
+            }
+            document.getElementById('calendar-day-detail').style.display = 'none';
+            renderCalendar();
+        });
+
+        document.getElementById('btn-cal-next').addEventListener('click', () => {
+            calendarMonth++;
+            if (calendarMonth > 11) {
+                calendarMonth = 0;
+                calendarYear++;
+            }
+            document.getElementById('calendar-day-detail').style.display = 'none';
+            renderCalendar();
+        });
+
+        // Click on calendar day
+        document.getElementById('calendar-days').addEventListener('click', (e) => {
+            const cell = e.target.closest('.calendar-cell:not(.empty)');
+            if (!cell) return;
+            const day = parseInt(cell.dataset.day);
+            showDayDetail(day);
+        });
+
+        // Close day detail
+        document.getElementById('btn-close-day-detail').addEventListener('click', () => {
+            document.getElementById('calendar-day-detail').style.display = 'none';
+        });
+
+        // Save/Delete day records (delegated)
+        document.getElementById('day-detail-records').addEventListener('click', (e) => {
+            const saveBtn = e.target.closest('.btn-save-day-record');
+            const deleteBtn = e.target.closest('.btn-delete-day-record');
+
+            if (saveBtn) {
+                const index = parseInt(saveBtn.dataset.index);
+                const recordEl = saveBtn.closest('.day-record-item');
+                saveDayRecord(index, recordEl);
+            }
+
+            if (deleteBtn) {
+                const index = parseInt(deleteBtn.dataset.index);
+                deleteDayRecord(index);
+            }
+        });
+
+        // Add record from calendar
+        document.getElementById('btn-cal-add-record').addEventListener('click', () => {
+            if (!selectedCalendarDay) {
+                alert('Select a day on the calendar first.');
+                return;
+            }
+            addCalendarRecord();
         });
 
         // Date range filter
@@ -708,24 +1307,85 @@
             const to = document.getElementById('export-date-to').value;
             exportCSV(filteredLogs, `icna-relief-hours-${from}-to-${to}.csv`);
         });
+
+        // --- Settings: Change passwords ---
+        document.getElementById('btn-save-unlock-pw').addEventListener('click', () => {
+            const input = document.getElementById('settings-new-unlock');
+            const msg = document.getElementById('unlock-pw-saved');
+            if (!input.value.trim()) {
+                alert('Please enter a new password.');
+                return;
+            }
+            setUnlockPassword(input.value.trim());
+            input.value = '';
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+        });
+
+        document.getElementById('btn-save-admin-pw').addEventListener('click', () => {
+            const input = document.getElementById('settings-new-admin');
+            const msg = document.getElementById('admin-pw-saved');
+            if (!input.value.trim()) {
+                alert('Please enter a new password.');
+                return;
+            }
+            setAdminPassword(input.value.trim());
+            input.value = '';
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+        });
+
+        // Show/hide current passwords
+        document.getElementById('btn-show-unlock-pw').addEventListener('click', () => {
+            const span = document.getElementById('display-unlock-pw');
+            const btn = document.getElementById('btn-show-unlock-pw');
+            if (span.textContent === '••••') {
+                span.textContent = getUnlockPassword();
+                btn.textContent = 'Hide';
+            } else {
+                span.textContent = '••••';
+                btn.textContent = 'Show';
+            }
+        });
+
+        document.getElementById('btn-show-admin-pw').addEventListener('click', () => {
+            const span = document.getElementById('display-admin-pw');
+            const btn = document.getElementById('btn-show-admin-pw');
+            if (span.textContent === '••••') {
+                span.textContent = getAdminPassword();
+                btn.textContent = 'Hide';
+            } else {
+                span.textContent = '••••';
+                btn.textContent = 'Show';
+            }
+        });
     }
 
-    // --- No Google Sheets URL Warning ---
+    // --- Local Storage Fallback (works without Google Sheets) ---
 
-    function checkConfig() {
-        if (!GOOGLE_SCRIPT_URL) {
-            els.volunteerList.innerHTML = `
-                <div class="empty-state" style="padding:2rem;">
-                    <p style="font-size:1.3rem; font-weight:600; margin-bottom:1rem;">Setup Required</p>
-                    <p style="font-size:1.1rem; line-height:1.6;">
-                        Open <strong>js/app.js</strong> and paste your Google Apps Script URL at the top of the file.<br><br>
-                        See <strong>GOOGLE_SHEETS_SETUP.md</strong> for step-by-step instructions.
-                    </p>
-                </div>
-            `;
-            return false;
+    const LOCAL_STORAGE_KEYS = {
+        volunteers: 'icna_volunteers',
+        logs: 'icna_clock_logs'
+    };
+
+    function saveLocal() {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.volunteers, JSON.stringify(volunteers));
+        localStorage.setItem(LOCAL_STORAGE_KEYS.logs, JSON.stringify(logs));
+    }
+
+    function loadLocal() {
+        try {
+            const savedVol = localStorage.getItem(LOCAL_STORAGE_KEYS.volunteers);
+            const savedLogs = localStorage.getItem(LOCAL_STORAGE_KEYS.logs);
+            if (savedVol) volunteers = JSON.parse(savedVol);
+            if (savedLogs) logs = JSON.parse(savedLogs);
+        } catch (e) {
+            console.error('Error loading local data:', e);
         }
-        return true;
+    }
+
+    function isOnlineMode() {
+        return GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.length > 10;
     }
 
     // --- Initialize App ---
@@ -735,10 +1395,7 @@
         setInterval(updateClock, 1000);
         initAdminTabs();
         initEvents();
-
-        if (checkConfig()) {
-            await loadVolunteers();
-        }
+        // Volunteers load after unlock — don't load here
     }
 
     // Start when DOM is ready
