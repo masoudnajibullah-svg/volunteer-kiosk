@@ -524,10 +524,260 @@ body {
     }
 }
 
-/* === LARGE iPAD (12.9") === */
-@media (min-width: 1024px) {
+/* === MOBILE PHONE (small screens) === */
+@media (max-width: 480px) {
+    html {
+        font-size: 15px;
+    }
+
+    .app-header {
+        padding: 0.8rem 1rem;
+    }
+
+    .app-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .subtitle {
+        font-size: 0.85rem;
+    }
+
+    .header-info {
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    .search-bar {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .search-bar input {
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+    }
+
+    .volunteer-list {
+        padding: 0.5rem 0.6rem;
+    }
+
+    .volunteer-item {
+        padding: 0.9rem 1rem;
+        margin-bottom: 0.4rem;
+        min-height: 56px;
+    }
+
+    .volunteer-item .vol-name {
+        font-size: 1.05rem;
+    }
+
+    .volunteer-item .vol-status {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+    }
+
+    .action-name {
+        font-size: 1.8rem;
+    }
+
+    .action-container {
+        padding: 1.5rem;
+    }
+
+    .btn-large {
+        padding: 1rem 2rem;
+        font-size: 1.2rem;
+        min-width: 160px;
+    }
+
+    .btn-clock-in,
+    .btn-clock-out {
+        font-size: 1.3rem;
+        padding: 1.1rem 2.5rem;
+    }
+
+    .confirmation-icon {
+        width: 80px;
+        height: 80px;
+        font-size: 2.5rem;
+    }
+
+    .confirmation-message {
+        font-size: 1.4rem;
+    }
+
+    .admin-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab {
+        padding: 0.7rem 0.4rem;
+        font-size: 0.75rem;
+        min-width: fit-content;
+    }
+
+    .tab-content {
+        padding: 0.8rem;
+    }
+
+    .profile-stats {
+        gap: 0.4rem;
+    }
+
+    .stat-card {
+        padding: 0.6rem 0.3rem;
+    }
+
+    .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .stat-label {
+        font-size: 0.6rem;
+    }
+
+    .calendar-cell {
+        min-height: 44px;
+    }
+
+    .cell-day-number {
+        font-size: 0.85rem;
+    }
+
+    .cell-shift-dot {
+        width: 14px;
+        height: 14px;
+        font-size: 0.55rem;
+    }
+
+    .calendar-month-label {
+        font-size: 1.1rem;
+    }
+
+    .date-range-picker {
+        flex-direction: column;
+    }
+
+    .date-field {
+        min-width: 100%;
+    }
+
+    .settings-form {
+        flex-direction: column;
+    }
+
+    .manage-add-form {
+        flex-direction: column;
+    }
+
+    .edit-form-row {
+        flex-direction: column;
+    }
+
+    .day-record-times {
+        flex-direction: column;
+    }
+
+    .unlock-icon {
+        font-size: 3rem;
+    }
+}
+
+/* === TABLET (iPad portrait) === */
+@media (min-width: 481px) and (max-width: 1024px) {
+    html {
+        font-size: 18px;
+    }
+}
+
+/* === LAPTOP / DESKTOP === */
+@media (min-width: 1025px) {
+    html {
+        font-size: 18px;
+    }
+
+    .screen {
+        align-items: center;
+    }
+
+    .app-header {
+        width: 100%;
+    }
+
+    .search-bar {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+        border-bottom: none;
+        padding: 1rem 0;
+    }
+
+    .volunteer-list {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 0.5rem 0;
+    }
+
+    .app-footer {
+        width: 100%;
+    }
+
+    .action-container {
+        max-width: 600px;
+    }
+
+    .confirmation-container {
+        max-width: 600px;
+    }
+
+    .admin-container {
+        max-width: 900px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .volunteer-item:hover {
+        background: #f0fdf4;
+        border-color: #1b5e20;
+        box-shadow: 0 2px 8px rgba(27, 94, 32, 0.12);
+    }
+
+    .btn:hover {
+        opacity: 0.9;
+    }
+
+    .calendar-cell:hover {
+        background: #f0fdf4;
+    }
+
+    .clickable-name:hover {
+        text-decoration: underline;
+        text-decoration-color: #1b5e20;
+    }
+
+    .tab:hover {
+        color: #1b5e20;
+        background: #f0fdf4;
+    }
+}
+
+/* === LARGE SCREENS (1440px+) === */
+@media (min-width: 1440px) {
     html {
         font-size: 20px;
+    }
+
+    .volunteer-list {
+        max-width: 800px;
+    }
+
+    .search-bar {
+        max-width: 800px;
+    }
+
+    .admin-container {
+        max-width: 1000px;
     }
 }
 
