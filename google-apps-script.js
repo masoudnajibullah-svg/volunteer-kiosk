@@ -133,12 +133,12 @@ function clockOut(data) {
   const time = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
   // Find the most recent "Clocked In" row for this volunteer
-  const allData = LOGS_SHEET.getDataRange().getValues();
+  const allData = LOGS_SHEET.getDataRange().getDisplayValues();
   let targetRow = -1;
 
   for (let i = allData.length - 1; i >= 1; i--) {
-    if (allData[i][1].toString().trim().toLowerCase() === name.toLowerCase() &&
-        allData[i][5].toString().trim() === 'Clocked In') {
+    if (allData[i][1].trim().toLowerCase() === name.toLowerCase() &&
+        allData[i][5].trim() === 'Clocked In') {
       targetRow = i + 1; // Sheet is 1-indexed
       break;
     }
@@ -149,7 +149,7 @@ function clockOut(data) {
   }
 
   // Calculate hours
-  const clockInTime = allData[targetRow - 1][2].toString();
+  const clockInTime = allData[targetRow - 1][2].trim();
   const hours = calculateTimeDiff(clockInTime, time);
 
   // Update the row: Clock Out time, Hours, Status
@@ -161,15 +161,15 @@ function clockOut(data) {
 }
 
 function getActiveShifts() {
-  const allData = LOGS_SHEET.getDataRange().getValues();
+  const allData = LOGS_SHEET.getDataRange().getDisplayValues();
   const active = [];
 
   for (let i = 1; i < allData.length; i++) {
-    if (allData[i][5].toString().trim() === 'Clocked In') {
+    if (allData[i][5].trim() === 'Clocked In') {
       active.push({
-        name: allData[i][1].toString().trim(),
-        date: allData[i][0].toString(),
-        clockIn: allData[i][2].toString()
+        name: allData[i][1].trim(),
+        date: allData[i][0].trim(),
+        clockIn: allData[i][2].trim()
       });
     }
   }
@@ -178,18 +178,18 @@ function getActiveShifts() {
 }
 
 function getLogs() {
-  const allData = LOGS_SHEET.getDataRange().getValues();
+  const allData = LOGS_SHEET.getDataRange().getDisplayValues();
   const logs = [];
 
   for (let i = 1; i < allData.length; i++) {
     if (allData[i][0]) {
       logs.push({
-        date: allData[i][0].toString(),
-        name: allData[i][1].toString().trim(),
-        clockIn: allData[i][2].toString(),
-        clockOut: allData[i][3].toString(),
-        hours: allData[i][4].toString(),
-        status: allData[i][5].toString()
+        date: allData[i][0].trim(),
+        name: allData[i][1].trim(),
+        clockIn: allData[i][2].trim(),
+        clockOut: allData[i][3].trim(),
+        hours: allData[i][4].trim(),
+        status: allData[i][5].trim()
       });
     }
   }
