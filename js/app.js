@@ -8,7 +8,7 @@
     // =====================================================
     // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL BELOW
     // =====================================================
-    const GOOGLE_SCRIPT_URL = '';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjdhSYQ0_IR_vRKsEibrAhaEtneoN4lX6cNaNRJT5R5ZnoA2mo_PZgkR-WLV6ZKBFqIw/exec';
     // =====================================================
 
     // --- Access Control ---
