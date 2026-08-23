@@ -11,11 +11,18 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- UNLOCK SCREEN: Staff enters password each morning -->
+    <!-- UNLOCK SCREEN -->
     <div id="screen-unlock" class="screen active">
+        <div class="unlock-decoration" aria-hidden="true">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+        </div>
+
         <header class="app-header">
             <h1>ICNA Relief</h1>
             <p class="subtitle">Volunteer Clock In / Out</p>
+            <div class="live-clock" id="unlock-clock"></div>
         </header>
 
         <div class="action-container">
@@ -41,9 +48,23 @@
             <p class="subtitle">Volunteer Clock In / Out</p>
             <div class="header-info">
                 <span id="current-date" class="date-display"></span>
-                <span id="current-time" class="time-display"></span>
+                <span id="current-time" class="live-clock-small"></span>
             </div>
         </header>
+
+        <div class="greeting-banner">
+            <span class="greeting-text" id="greeting-text">Good morning</span>
+            <div class="greeting-stats">
+                <span class="greeting-stat">
+                    <span class="stat-dot"></span>
+                    <span id="stat-in-count">0 in</span>
+                </span>
+                <span class="greeting-stat">
+                    <span class="stat-dot amber"></span>
+                    <span id="stat-today-hours">0 hrs today</span>
+                </span>
+            </div>
+        </div>
 
         <div class="search-bar">
             <input type="text" id="volunteer-search" placeholder="Search your name..." aria-label="Search volunteer name">
@@ -66,8 +87,10 @@
         </header>
 
         <div class="action-container">
+            <div class="action-avatar" id="action-avatar"></div>
             <h2 id="action-volunteer-name" class="action-name"></h2>
             <p id="action-status" class="action-status"></p>
+            <p id="action-time-info" class="action-time-info"></p>
 
             <div class="action-buttons">
                 <button id="btn-clock-in" class="btn btn-large btn-clock-in" aria-label="Clock In">Clock In</button>
@@ -88,6 +111,10 @@
             <div class="confirmation-icon" id="confirmation-icon" aria-hidden="true"></div>
             <h2 id="confirmation-message" class="confirmation-message"></h2>
             <p id="confirmation-time" class="confirmation-time"></p>
+            <p id="confirmation-hours" class="confirmation-hours"></p>
+            <div class="confirmation-progress">
+                <div class="confirmation-progress-bar"></div>
+            </div>
         </div>
     </div>
 

@@ -54,17 +54,24 @@
     const els = {
         currentDate: document.getElementById('current-date'),
         currentTime: document.getElementById('current-time'),
+        unlockClock: document.getElementById('unlock-clock'),
+        greetingText: document.getElementById('greeting-text'),
+        statInCount: document.getElementById('stat-in-count'),
+        statTodayHours: document.getElementById('stat-today-hours'),
         volunteerSearch: document.getElementById('volunteer-search'),
         volunteerList: document.getElementById('volunteer-list'),
         footerCount: document.getElementById('footer-count'),
         actionName: document.getElementById('action-volunteer-name'),
+        actionAvatar: document.getElementById('action-avatar'),
         actionStatus: document.getElementById('action-status'),
+        actionTimeInfo: document.getElementById('action-time-info'),
         btnClockIn: document.getElementById('btn-clock-in'),
         btnClockOut: document.getElementById('btn-clock-out'),
         btnBack: document.getElementById('btn-back'),
         confirmationIcon: document.getElementById('confirmation-icon'),
         confirmationMessage: document.getElementById('confirmation-message'),
         confirmationTime: document.getElementById('confirmation-time'),
+        confirmationHours: document.getElementById('confirmation-hours'),
         btnAdmin: document.getElementById('btn-admin'),
         btnAdminBack: document.getElementById('btn-admin-back'),
         currentlyInList: document.getElementById('currently-in-list'),
@@ -166,8 +173,13 @@
                     }
                 });
             }
+
+            // Load logs for today's hours stat
+            await loadLogs();
+            updateTodayHoursStat();
         } else {
             loadLocal();
+            updateTodayHoursStat();
         }
 
         renderVolunteerList('');
@@ -197,6 +209,44 @@
         const now = new Date();
         els.currentDate.textContent = formatDate(now);
         els.currentTime.textContent = formatTime(now);
+
+        // Unlock screen clock
+        if (els.unlockClock) {
+            els.unlockClock.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+
+        // Greeting
+        updateGreeting(now);
+    }
+
+    function updateGreeting(now) {
+        const hour = now.getHours();
+        let greeting;
+        if (hour < 12) greeting = 'Good morning';
+        else if (hour < 17) greeting = 'Good afternoon';
+        else greeting = 'Good evening';
+
+        if (els.greetingText) {
+            els.greetingText.textContent = greeting;
+        }
+
+        // Stats in greeting bar
+        if (els.statInCount) {
+            const clockedInCount = volunteers.filter(v => v.clockedIn).length;
+            els.statInCount.textContent = `${clockedInCount} in`;
+        }
+    }
+
+    function updateTodayHoursStat() {
+        if (!els.statTodayHours) return;
+        const today = getToday();
+        const todayLogs = logs.filter(l => l.date === today && l.hours);
+        const totalHours = todayLogs.reduce((sum, l) => sum + (parseFloat(l.hours) || 0), 0);
+        els.statTodayHours.textContent = `${Math.round(totalHours * 10) / 10} hrs today`;
+    }
+
+    function getInitials(name) {
+        return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
     }
 
     // --- Volunteer List Rendering ---
@@ -224,7 +274,10 @@
 
         els.volunteerList.innerHTML = filtered.map(v => `
             <div class="volunteer-item" data-name="${escapeHtml(v.name)}" role="listitem" tabindex="0">
-                <span class="vol-name">${escapeHtml(v.name)}</span>
+                <div class="vol-info">
+                    <div class="vol-avatar">${getInitials(v.name)}</div>
+                    <span class="vol-name">${escapeHtml(v.name)}</span>
+                </div>
                 <span class="vol-status ${v.clockedIn ? 'status-in' : 'status-out'}">
                     ${v.clockedIn ? 'Clocked In' : 'Not In'}
                 </span>
@@ -244,13 +297,16 @@
     function showClockAction(volunteer) {
         selectedVolunteer = volunteer;
         els.actionName.textContent = volunteer.name;
+        els.actionAvatar.textContent = getInitials(volunteer.name);
 
         if (volunteer.clockedIn) {
-            els.actionStatus.textContent = `Clocked in since ${volunteer.clockInTime}`;
+            els.actionStatus.textContent = `Currently clocked in`;
+            els.actionTimeInfo.textContent = `Since ${volunteer.clockInTime}`;
             els.btnClockIn.classList.add('hidden');
             els.btnClockOut.classList.remove('hidden');
         } else {
             els.actionStatus.textContent = 'Not currently clocked in';
+            els.actionTimeInfo.textContent = '';
             els.btnClockIn.classList.remove('hidden');
             els.btnClockOut.classList.add('hidden');
         }
@@ -371,6 +427,21 @@
 
         els.confirmationTime.textContent = formatTime(time);
 
+        // Show hours worked if clocking out
+        if (action === 'out' && els.confirmationHours) {
+            els.confirmationHours.textContent = 'Great work today!';
+        } else if (els.confirmationHours) {
+            els.confirmationHours.textContent = 'Have a great shift!';
+        }
+
+        // Reset progress bar animation
+        const progressBar = document.querySelector('.confirmation-progress-bar');
+        if (progressBar) {
+            progressBar.style.animation = 'none';
+            progressBar.offsetHeight; // Force reflow
+            progressBar.style.animation = 'progressShrink 3s linear forwards';
+        }
+
         showScreen('confirmation');
 
         // Auto-return to main screen after 3 seconds
@@ -390,14 +461,31 @@
             return;
         }
 
-        els.currentlyInList.innerHTML = clockedIn.map(v => `
-            <div class="admin-list-item">
-                <div>
-                    <div class="item-name">${escapeHtml(v.name)}</div>
-                    <div class="item-time">Since ${v.clockInTime || 'unknown'}</div>
+        els.currentlyInList.innerHTML = clockedIn.map(v => {
+            const duration = getElapsedTime(v.clockInTime);
+            return `
+                <div class="admin-list-item">
+                    <div>
+                        <div class="item-name">${escapeHtml(v.name)}</div>
+                        <div class="item-time">Since ${v.clockInTime || 'unknown'}</div>
+                    </div>
+                    ${duration ? `<span class="item-duration">${duration}</span>` : ''}
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    function getElapsedTime(clockInTime) {
+        if (!clockInTime) return '';
+        const inTime = parseLocalTime(clockInTime);
+        if (!inTime) return '';
+        const now = new Date();
+        let diff = (now - inTime) / (1000 * 60); // minutes
+        if (diff < 0) diff += 24 * 60;
+        const hours = Math.floor(diff / 60);
+        const mins = Math.floor(diff % 60);
+        if (hours > 0) return `${hours}h ${mins}m`;
+        return `${mins}m`;
     }
 
     // --- Admin: Today's Log ---
