@@ -488,6 +488,7 @@ body {
 
 #screen-unlock .action-container {
     color: var(--white);
+    background: transparent;
 }
 
 #screen-unlock .action-name {
