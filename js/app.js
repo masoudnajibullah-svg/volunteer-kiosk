@@ -918,11 +918,35 @@
         renderCalendar();
     }
 
+    function populateYearSelect() {
+        const yearSelect = document.getElementById('cal-year-select');
+        if (!yearSelect) return;
+        const thisYear = new Date().getFullYear();
+        // Range: 3 years back through 1 year ahead
+        const startYear = thisYear - 3;
+        const endYear = thisYear + 1;
+        // Only rebuild if empty or range changed
+        if (yearSelect.options.length !== (endYear - startYear + 1)) {
+            let html = '';
+            for (let y = startYear; y <= endYear; y++) {
+                html += `<option value="${y}">${y}</option>`;
+            }
+            yearSelect.innerHTML = html;
+        }
+    }
+
     function renderCalendar() {
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                             'July', 'August', 'September', 'October', 'November', 'December'];
 
-        document.getElementById('calendar-month-label').textContent = `${monthNames[calendarMonth]} ${calendarYear}`;
+        // Sync the month/year jump dropdowns
+        const monthSelect = document.getElementById('cal-month-select');
+        const yearSelect = document.getElementById('cal-year-select');
+        if (monthSelect) monthSelect.value = String(calendarMonth);
+        if (yearSelect) {
+            populateYearSelect();
+            yearSelect.value = String(calendarYear);
+        }
 
         // Get first day of month and total days
         const firstDay = new Date(calendarYear, calendarMonth, 1).getDay(); // 0=Sun
@@ -1039,6 +1063,12 @@
         const newClockIn = fromInputTimeFormat(clockInInput.value);
         const newClockOut = fromInputTimeFormat(clockOutInput.value);
 
+        // Prevent this edit from overlapping a different shift on the same day
+        if (hasTimeConflict(recordDate, recordName, newClockIn, newClockOut, origClockIn)) {
+            alert(`${recordName} already has another shift that overlaps this time on this day. Please pick a different time.`);
+            return;
+        }
+
         logs[logIndex].clockIn = newClockIn;
         logs[logIndex].clockOut = newClockOut;
 
@@ -1109,6 +1139,36 @@
         showDayDetail(selectedCalendarDay);
     }
 
+    // Returns minutes-since-midnight for a "9:05 AM" style string, or null.
+    function timeToMinutes(timeStr) {
+        const t = parseLocalTime(timeStr);
+        if (!t) return null;
+        return t.getHours() * 60 + t.getMinutes();
+    }
+
+    // Checks whether a proposed shift on a date conflicts with an existing
+    // record for the same person. `ignoreClockIn` lets an edit skip its own row.
+    function hasTimeConflict(date, name, clockIn, clockOut, ignoreClockIn) {
+        const newStart = timeToMinutes(clockIn);
+        if (newStart === null) return false;
+        let newEnd = timeToMinutes(clockOut);
+        if (newEnd === null || newEnd < newStart) newEnd = newStart; // open shift = single point
+
+        return logs.some(l => {
+            if (l.date !== date) return false;
+            if (l.name.toLowerCase() !== name.toLowerCase()) return false;
+            if (ignoreClockIn !== undefined && l.clockIn === ignoreClockIn) return false;
+
+            const exStart = timeToMinutes(l.clockIn);
+            if (exStart === null) return false;
+            let exEnd = timeToMinutes(l.clockOut);
+            if (exEnd === null || exEnd < exStart) exEnd = exStart;
+
+            // Overlap if ranges intersect (touching endpoints counts as conflict)
+            return newStart <= exEnd && exStart <= newEnd;
+        });
+    }
+
     async function addCalendarRecord() {
         const clockInInput = document.getElementById('cal-new-clockin');
         const clockOutInput = document.getElementById('cal-new-clockout');
@@ -1120,11 +1180,20 @@
 
         const dateStr = `${calendarMonth + 1}/${selectedCalendarDay}/${calendarYear}`;
 
+        const proposedClockIn = fromInputTimeFormat(clockInInput.value);
+        const proposedClockOut = clockOutInput.value ? fromInputTimeFormat(clockOutInput.value) : '';
+
+        // Prevent duplicate / overlapping shifts for the same person on this day
+        if (hasTimeConflict(dateStr, editingVolunteerName, proposedClockIn, proposedClockOut)) {
+            alert(`${editingVolunteerName} already has a shift that overlaps this time on this day. Please pick a different time or edit the existing shift.`);
+            return;
+        }
+
         const newLog = {
             date: dateStr,
             name: editingVolunteerName,
-            clockIn: fromInputTimeFormat(clockInInput.value),
-            clockOut: clockOutInput.value ? fromInputTimeFormat(clockOutInput.value) : '',
+            clockIn: proposedClockIn,
+            clockOut: proposedClockOut,
             hours: '',
             status: clockOutInput.value ? 'Complete' : 'Clocked In'
         };
@@ -1391,6 +1460,20 @@
                 calendarMonth = 0;
                 calendarYear++;
             }
+            document.getElementById('calendar-day-detail').style.display = 'none';
+            renderCalendar();
+        });
+
+        // Jump to month via dropdown
+        document.getElementById('cal-month-select').addEventListener('change', (e) => {
+            calendarMonth = parseInt(e.target.value);
+            document.getElementById('calendar-day-detail').style.display = 'none';
+            renderCalendar();
+        });
+
+        // Jump to year via dropdown
+        document.getElementById('cal-year-select').addEventListener('change', (e) => {
+            calendarYear = parseInt(e.target.value);
             document.getElementById('calendar-day-detail').style.display = 'none';
             renderCalendar();
         });

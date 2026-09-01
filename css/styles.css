@@ -1440,6 +1440,30 @@ body {
     color: var(--slate-800);
 }
 
+.calendar-month-select {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.cal-jump-select {
+    padding: 0.5rem 0.7rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--slate-800);
+    border: 1.5px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    background: var(--white);
+    outline: none;
+    cursor: pointer;
+    appearance: auto;
+    transition: border-color 0.2s;
+}
+
+.cal-jump-select:focus {
+    border-color: var(--green-600);
+}
+
 /* Calendar Grid */
 .calendar-grid {
     background: var(--white);

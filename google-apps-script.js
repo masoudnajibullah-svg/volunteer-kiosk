@@ -129,6 +129,11 @@ function addRecord(data) {
   if (!name) return { success: false, error: 'Name is required' };
   if (!data.date) return { success: false, error: 'Date is required' };
 
+  // Guard against duplicate / overlapping shifts for the same person + day.
+  if (recordConflicts(data.date, name, data.clockIn, data.clockOut)) {
+    return { success: false, error: 'A shift already exists that overlaps this time for this person on this day.' };
+  }
+
   const hours = (data.clockIn && data.clockOut)
     ? calculateTimeDiff(data.clockIn, data.clockOut)
     : '';
@@ -146,11 +151,50 @@ function addRecord(data) {
   return { success: true };
 }
 
+// Convert "9:05 AM" to minutes since midnight, or null.
+function timeToMinutes(timeStr) {
+  const d = parseTimeString(timeStr);
+  if (!d) return null;
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+// True if a shift on `date` for `name` overlaps an existing row.
+// `ignoreClockIn` skips a row (used when editing).
+function recordConflicts(date, name, clockIn, clockOut, ignoreClockIn) {
+  const newStart = timeToMinutes(clockIn);
+  if (newStart === null) return false;
+  let newEnd = timeToMinutes(clockOut);
+  if (newEnd === null || newEnd < newStart) newEnd = newStart;
+
+  const allData = LOGS_SHEET.getDataRange().getDisplayValues();
+  const d = (date || '').trim();
+  const n = (name || '').trim().toLowerCase();
+
+  for (let i = 1; i < allData.length; i++) {
+    if (allData[i][0].trim() !== d) continue;
+    if (allData[i][1].trim().toLowerCase() !== n) continue;
+    if (ignoreClockIn !== undefined && allData[i][2].trim() === (ignoreClockIn || '').trim()) continue;
+
+    const exStart = timeToMinutes(allData[i][2].trim());
+    if (exStart === null) continue;
+    let exEnd = timeToMinutes(allData[i][3].trim());
+    if (exEnd === null || exEnd < exStart) exEnd = exStart;
+
+    if (newStart <= exEnd && exStart <= newEnd) return true;
+  }
+  return false;
+}
+
 // Update an existing record. Matches on original date + name + original clockIn.
 // data: { date, name, origClockIn, clockIn, clockOut }
 function updateRecord(data) {
   const name = data.name ? data.name.trim() : '';
   if (!name) return { success: false, error: 'Name is required' };
+
+  // Guard against overlapping a different shift (ignore the row being edited).
+  if (recordConflicts(data.date, name, data.clockIn, data.clockOut, data.origClockIn)) {
+    return { success: false, error: 'Another shift already overlaps this time for this person on this day.' };
+  }
 
   const allData = LOGS_SHEET.getDataRange().getDisplayValues();
 
