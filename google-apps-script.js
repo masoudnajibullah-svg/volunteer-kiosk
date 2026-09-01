@@ -52,6 +52,18 @@ function doPost(e) {
       return jsonResponse(removeVolunteer(data));
     }
 
+    if (action === 'addRecord') {
+      return jsonResponse(addRecord(data));
+    }
+
+    if (action === 'updateRecord') {
+      return jsonResponse(updateRecord(data));
+    }
+
+    if (action === 'deleteRecord') {
+      return jsonResponse(deleteRecord(data));
+    }
+
     return jsonResponse({ error: 'Unknown action' });
   } catch (err) {
     return jsonResponse({ error: err.message });
@@ -107,6 +119,90 @@ function removeVolunteer(data) {
   }
 
   return { success: false, error: 'Volunteer not found' };
+}
+
+// --- Edit Records Functions (used by admin calendar) ---
+
+// Add a manual record. data: { date, name, clockIn, clockOut, hours, status }
+function addRecord(data) {
+  const name = data.name ? data.name.trim() : '';
+  if (!name) return { success: false, error: 'Name is required' };
+  if (!data.date) return { success: false, error: 'Date is required' };
+
+  const hours = (data.clockIn && data.clockOut)
+    ? calculateTimeDiff(data.clockIn, data.clockOut)
+    : '';
+  const status = data.clockOut ? 'Complete' : 'Clocked In';
+
+  LOGS_SHEET.appendRow([
+    data.date,
+    name,
+    data.clockIn || '',
+    data.clockOut || '',
+    hours,
+    status
+  ]);
+
+  return { success: true };
+}
+
+// Update an existing record. Matches on original date + name + original clockIn.
+// data: { date, name, origClockIn, clockIn, clockOut }
+function updateRecord(data) {
+  const name = data.name ? data.name.trim() : '';
+  if (!name) return { success: false, error: 'Name is required' };
+
+  const allData = LOGS_SHEET.getDataRange().getDisplayValues();
+
+  for (let i = 1; i < allData.length; i++) {
+    const rowDate = allData[i][0].trim();
+    const rowName = allData[i][1].trim();
+    const rowClockIn = allData[i][2].trim();
+
+    if (rowDate === data.date.trim() &&
+        rowName.toLowerCase() === name.toLowerCase() &&
+        rowClockIn === (data.origClockIn || '').trim()) {
+
+      const hours = (data.clockIn && data.clockOut)
+        ? calculateTimeDiff(data.clockIn, data.clockOut)
+        : '';
+      const status = data.clockOut ? 'Complete' : 'Clocked In';
+
+      const row = i + 1;
+      LOGS_SHEET.getRange(row, 3).setValue(data.clockIn || '');   // Clock In
+      LOGS_SHEET.getRange(row, 4).setValue(data.clockOut || '');  // Clock Out
+      LOGS_SHEET.getRange(row, 5).setValue(hours);                // Hours
+      LOGS_SHEET.getRange(row, 6).setValue(status);               // Status
+
+      return { success: true };
+    }
+  }
+
+  return { success: false, error: 'Record not found' };
+}
+
+// Delete a record. Matches on date + name + clockIn.
+// data: { date, name, clockIn }
+function deleteRecord(data) {
+  const name = data.name ? data.name.trim() : '';
+  if (!name) return { success: false, error: 'Name is required' };
+
+  const allData = LOGS_SHEET.getDataRange().getDisplayValues();
+
+  for (let i = 1; i < allData.length; i++) {
+    const rowDate = allData[i][0].trim();
+    const rowName = allData[i][1].trim();
+    const rowClockIn = allData[i][2].trim();
+
+    if (rowDate === data.date.trim() &&
+        rowName.toLowerCase() === name.toLowerCase() &&
+        rowClockIn === (data.clockIn || '').trim()) {
+      LOGS_SHEET.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+
+  return { success: false, error: 'Record not found' };
 }
 
 // --- Clock In/Out Functions ---

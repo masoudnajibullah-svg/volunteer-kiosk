@@ -1029,12 +1029,18 @@
         document.getElementById('calendar-day-detail').style.display = 'block';
     }
 
-    function saveDayRecord(logIndex, recordEl) {
+    async function saveDayRecord(logIndex, recordEl) {
         const clockInInput = recordEl.querySelector('.edit-input-clockin');
         const clockOutInput = recordEl.querySelector('.edit-input-clockout');
 
-        logs[logIndex].clockIn = fromInputTimeFormat(clockInInput.value);
-        logs[logIndex].clockOut = fromInputTimeFormat(clockOutInput.value);
+        const origClockIn = logs[logIndex].clockIn; // needed to locate the row in the sheet
+        const recordDate = logs[logIndex].date;
+        const recordName = logs[logIndex].name;
+        const newClockIn = fromInputTimeFormat(clockInInput.value);
+        const newClockOut = fromInputTimeFormat(clockOutInput.value);
+
+        logs[logIndex].clockIn = newClockIn;
+        logs[logIndex].clockOut = newClockOut;
 
         // Recalculate hours
         if (logs[logIndex].clockIn && logs[logIndex].clockOut) {
@@ -1051,21 +1057,59 @@
             logs[logIndex].status = 'Clocked In';
         }
 
-        saveLocal();
+        if (isOnlineMode()) {
+            const result = await apiPost({
+                action: 'updateRecord',
+                date: recordDate,
+                name: recordName,
+                origClockIn: origClockIn,
+                clockIn: newClockIn,
+                clockOut: newClockOut
+            });
+            if (!result || !result.success) {
+                alert(result && result.error ? result.error : 'Error saving to Google Sheets.');
+                await loadLogs();
+                renderCalendar();
+                showDayDetail(selectedCalendarDay);
+                return;
+            }
+            await loadLogs();
+        } else {
+            saveLocal();
+        }
+
         alert('Record saved.');
         renderCalendar();
         showDayDetail(selectedCalendarDay);
     }
 
-    function deleteDayRecord(logIndex) {
+    async function deleteDayRecord(logIndex) {
         if (!confirm('Delete this shift?')) return;
-        logs.splice(logIndex, 1);
-        saveLocal();
+
+        const record = logs[logIndex];
+
+        if (isOnlineMode()) {
+            const result = await apiPost({
+                action: 'deleteRecord',
+                date: record.date,
+                name: record.name,
+                clockIn: record.clockIn
+            });
+            if (!result || !result.success) {
+                alert(result && result.error ? result.error : 'Error deleting from Google Sheets.');
+                return;
+            }
+            await loadLogs();
+        } else {
+            logs.splice(logIndex, 1);
+            saveLocal();
+        }
+
         renderCalendar();
         showDayDetail(selectedCalendarDay);
     }
 
-    function addCalendarRecord() {
+    async function addCalendarRecord() {
         const clockInInput = document.getElementById('cal-new-clockin');
         const clockOutInput = document.getElementById('cal-new-clockout');
 
@@ -1096,8 +1140,23 @@
             }
         }
 
-        logs.push(newLog);
-        saveLocal();
+        if (isOnlineMode()) {
+            const result = await apiPost({
+                action: 'addRecord',
+                date: newLog.date,
+                name: newLog.name,
+                clockIn: newLog.clockIn,
+                clockOut: newLog.clockOut
+            });
+            if (!result || !result.success) {
+                alert(result && result.error ? result.error : 'Error adding to Google Sheets.');
+                return;
+            }
+            await loadLogs();
+        } else {
+            logs.push(newLog);
+            saveLocal();
+        }
 
         clockInInput.value = '';
         clockOutInput.value = '';
