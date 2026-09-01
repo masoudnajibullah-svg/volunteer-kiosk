@@ -1440,6 +1440,43 @@ body {
     color: var(--slate-800);
 }
 
+.profile-cal-hint {
+    font-size: 0.82rem;
+    color: var(--slate-400);
+    margin-bottom: 0.8rem;
+    font-style: italic;
+}
+
+.calendar-jump {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+}
+
+.calendar-jump label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.calendar-jump input[type="date"] {
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    border: 1.5px solid var(--slate-200);
+    border-radius: var(--radius-sm);
+    outline: none;
+    background: var(--white);
+    transition: border-color 0.2s;
+}
+
+.calendar-jump input[type="date"]:focus {
+    border-color: var(--green-600);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.08);
+}
+
 .calendar-month-select {
     display: flex;
     gap: 0.5rem;
@@ -1538,7 +1575,12 @@ body {
 }
 
 .calendar-cell.has-shift {
-    background: var(--green-50);
+    background: var(--green-100);
+}
+
+.calendar-cell.has-shift .cell-day-number {
+    color: var(--green-800);
+    font-weight: 700;
 }
 
 .cell-day-number {

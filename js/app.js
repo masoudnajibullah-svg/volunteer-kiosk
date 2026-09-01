@@ -648,6 +648,9 @@
                 `;
             }).join('');
         }
+
+        // Set up the editable calendar for this volunteer
+        loadCalendarForVolunteer(name);
     }
 
     function getMonthLabel(month, year) {
@@ -893,28 +896,23 @@
         }
     }
 
-    // --- Admin: Edit Records (Calendar View) ---
+    // --- Profile Calendar (edit records within a volunteer's profile) ---
 
     let editingVolunteerName = '';
     let calendarYear = new Date().getFullYear();
     let calendarMonth = new Date().getMonth(); // 0-indexed
     let selectedCalendarDay = null;
 
-    function populateEditVolunteerSelect() {
-        const select = document.getElementById('edit-volunteer-select');
-        const sorted = [...volunteers].sort((a, b) => a.name.localeCompare(b.name));
-        select.innerHTML = '<option value="">— Select a volunteer —</option>' +
-            sorted.map(v => `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)}</option>`).join('');
-    }
-
+    // Called when a profile opens — set up and render the calendar for that person.
     function loadCalendarForVolunteer(name) {
         editingVolunteerName = name;
-        if (!name) {
-            document.getElementById('calendar-container').style.display = 'none';
-            return;
-        }
-        document.getElementById('calendar-container').style.display = 'block';
-        document.getElementById('calendar-day-detail').style.display = 'none';
+        calendarYear = new Date().getFullYear();
+        calendarMonth = new Date().getMonth();
+        selectedCalendarDay = null;
+        const detail = document.getElementById('calendar-day-detail');
+        if (detail) detail.style.display = 'none';
+        const jump = document.getElementById('cal-jump-date');
+        if (jump) jump.value = '';
         renderCalendar();
     }
 
@@ -1297,9 +1295,7 @@
             case 'tab-log':
                 renderTodayLog();
                 break;
-            case 'tab-edit-records':
-                populateEditVolunteerSelect();
-                break;
+
             case 'tab-manage':
                 renderManageVolunteers();
                 break;
@@ -1432,15 +1428,18 @@
             exportCSV(logs, 'icna-relief-volunteer-hours-all.csv');
         });
 
-        // --- Edit Records (Calendar) events ---
-        document.getElementById('btn-load-records').addEventListener('click', async () => {
-            const select = document.getElementById('edit-volunteer-select');
-            if (!select.value) {
-                alert('Please select a volunteer.');
-                return;
-            }
-            await loadLogs();
-            loadCalendarForVolunteer(select.value);
+        // --- Profile Calendar events ---
+
+        // Jump to a specific date via the date input
+        document.getElementById('cal-jump-date').addEventListener('change', (e) => {
+            if (!e.target.value) return;
+            const parts = e.target.value.split('-'); // YYYY-MM-DD
+            if (parts.length !== 3) return;
+            calendarYear = parseInt(parts[0]);
+            calendarMonth = parseInt(parts[1]) - 1;
+            const day = parseInt(parts[2]);
+            renderCalendar();
+            showDayDetail(day);
         });
 
         // Calendar navigation

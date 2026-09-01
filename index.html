@@ -152,7 +152,6 @@
             <div class="admin-tabs" role="tablist">
                 <button class="tab active" data-tab="tab-currently-in" role="tab" aria-selected="true">Currently In</button>
                 <button class="tab" data-tab="tab-log" role="tab" aria-selected="false">Today's Log</button>
-                <button class="tab" data-tab="tab-edit-records" role="tab" aria-selected="false">Edit Records</button>
                 <button class="tab" data-tab="tab-manage" role="tab" aria-selected="false">Manage Volunteers</button>
                 <button class="tab" data-tab="tab-export" role="tab" aria-selected="false">Export Data</button>
                 <button class="tab" data-tab="tab-settings" role="tab" aria-selected="false">Settings</button>
@@ -168,71 +167,6 @@
             <div id="tab-log" class="tab-content" role="tabpanel">
                 <h3>Today's Activity Log</h3>
                 <div id="today-log-list" class="admin-list"></div>
-            </div>
-
-            <!-- Edit Records -->
-            <div id="tab-edit-records" class="tab-content" role="tabpanel">
-                <h3>Edit Clock In/Out Records</h3>
-
-                <div class="edit-select-volunteer">
-                    <select id="edit-volunteer-select" class="edit-select" aria-label="Select volunteer">
-                        <option value="">— Select a volunteer —</option>
-                    </select>
-                    <button id="btn-load-records" class="btn btn-medium btn-primary" aria-label="Load records">Load</button>
-                </div>
-
-                <div id="calendar-container" style="display:none;">
-                    <div class="calendar-nav">
-                        <button id="btn-cal-prev" class="btn btn-small btn-secondary" aria-label="Previous month">←</button>
-                        <div class="calendar-month-select">
-                            <select id="cal-month-select" class="cal-jump-select" aria-label="Select month">
-                                <option value="0">January</option>
-                                <option value="1">February</option>
-                                <option value="2">March</option>
-                                <option value="3">April</option>
-                                <option value="4">May</option>
-                                <option value="5">June</option>
-                                <option value="6">July</option>
-                                <option value="7">August</option>
-                                <option value="8">September</option>
-                                <option value="9">October</option>
-                                <option value="10">November</option>
-                                <option value="11">December</option>
-                            </select>
-                            <select id="cal-year-select" class="cal-jump-select" aria-label="Select year"></select>
-                        </div>
-                        <button id="btn-cal-next" class="btn btn-small btn-secondary" aria-label="Next month">→</button>
-                    </div>
-
-                    <div class="calendar-grid">
-                        <div class="calendar-header">
-                            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                        </div>
-                        <div id="calendar-days" class="calendar-days"></div>
-                    </div>
-
-                    <div id="calendar-day-detail" class="calendar-day-detail" style="display:none;">
-                        <div class="day-detail-header">
-                            <h4 id="day-detail-title"></h4>
-                            <button id="btn-close-day-detail" class="btn btn-small btn-secondary" aria-label="Close">Close</button>
-                        </div>
-                        <div id="day-detail-records" class="day-detail-records"></div>
-                        <div class="day-detail-add">
-                            <h5>Add Shift</h5>
-                            <div class="edit-form-row">
-                                <div class="edit-field">
-                                    <label for="cal-new-clockin">Clock In</label>
-                                    <input type="time" id="cal-new-clockin" aria-label="Clock in time">
-                                </div>
-                                <div class="edit-field">
-                                    <label for="cal-new-clockout">Clock Out</label>
-                                    <input type="time" id="cal-new-clockout" aria-label="Clock out time">
-                                </div>
-                                <button id="btn-cal-add-record" class="btn btn-medium btn-primary" aria-label="Add shift">Add</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Manage Volunteers -->
@@ -267,6 +201,69 @@
                     <div class="stat-card">
                         <span class="stat-value" id="profile-avg-hours">0</span>
                         <span class="stat-label">Avg Hours/Shift</span>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h4>Edit Shifts — Calendar</h4>
+                    <p class="profile-cal-hint">Green days have shifts. Tap any day to view, add, edit, or delete.</p>
+
+                    <div class="calendar-jump">
+                        <label for="cal-jump-date">Jump to date</label>
+                        <input type="date" id="cal-jump-date" aria-label="Jump to a specific date">
+                    </div>
+
+                    <div id="calendar-container">
+                        <div class="calendar-nav">
+                            <button id="btn-cal-prev" class="btn btn-small btn-secondary" aria-label="Previous month">←</button>
+                            <div class="calendar-month-select">
+                                <select id="cal-month-select" class="cal-jump-select" aria-label="Select month">
+                                    <option value="0">January</option>
+                                    <option value="1">February</option>
+                                    <option value="2">March</option>
+                                    <option value="3">April</option>
+                                    <option value="4">May</option>
+                                    <option value="5">June</option>
+                                    <option value="6">July</option>
+                                    <option value="7">August</option>
+                                    <option value="8">September</option>
+                                    <option value="9">October</option>
+                                    <option value="10">November</option>
+                                    <option value="11">December</option>
+                                </select>
+                                <select id="cal-year-select" class="cal-jump-select" aria-label="Select year"></select>
+                            </div>
+                            <button id="btn-cal-next" class="btn btn-small btn-secondary" aria-label="Next month">→</button>
+                        </div>
+
+                        <div class="calendar-grid">
+                            <div class="calendar-header">
+                                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                            </div>
+                            <div id="calendar-days" class="calendar-days"></div>
+                        </div>
+
+                        <div id="calendar-day-detail" class="calendar-day-detail" style="display:none;">
+                            <div class="day-detail-header">
+                                <h4 id="day-detail-title"></h4>
+                                <button id="btn-close-day-detail" class="btn btn-small btn-secondary" aria-label="Close">Close</button>
+                            </div>
+                            <div id="day-detail-records" class="day-detail-records"></div>
+                            <div class="day-detail-add">
+                                <h5>Add Shift</h5>
+                                <div class="edit-form-row">
+                                    <div class="edit-field">
+                                        <label for="cal-new-clockin">Clock In</label>
+                                        <input type="time" id="cal-new-clockin" aria-label="Clock in time">
+                                    </div>
+                                    <div class="edit-field">
+                                        <label for="cal-new-clockout">Clock Out</label>
+                                        <input type="time" id="cal-new-clockout" aria-label="Clock out time">
+                                    </div>
+                                    <button id="btn-cal-add-record" class="btn btn-medium btn-primary" aria-label="Add shift">Add</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
