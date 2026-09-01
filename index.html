@@ -268,6 +268,41 @@
                 </div>
 
                 <div class="profile-section">
+                    <h4>Export This Volunteer's Hours</h4>
+                    <p class="profile-cal-hint">Pick a date range, then print or download just this person's records.</p>
+                    <div class="date-range-picker">
+                        <div class="date-field">
+                            <label for="profile-export-from">From</label>
+                            <input type="date" id="profile-export-from" aria-label="Start date">
+                        </div>
+                        <div class="date-field">
+                            <label for="profile-export-to">To</label>
+                            <input type="date" id="profile-export-to" aria-label="End date">
+                        </div>
+                        <button id="btn-profile-filter" class="btn btn-medium btn-primary" aria-label="Show records">Show</button>
+                    </div>
+
+                    <div id="profile-filtered-results" class="filtered-results" style="display:none;">
+                        <div class="filtered-summary" id="profile-filtered-summary"></div>
+                        <table class="records-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Clock In</th>
+                                    <th>Clock Out</th>
+                                    <th>Hours</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profile-records-table-body"></tbody>
+                        </table>
+                        <div class="filtered-actions">
+                            <button id="btn-profile-print" class="btn btn-large btn-primary" aria-label="Print records">Print</button>
+                            <button id="btn-profile-export-csv" class="btn btn-large btn-secondary" aria-label="Download CSV">Download CSV</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
                     <h4>Monthly Hours</h4>
                     <div id="profile-monthly-hours" class="monthly-hours-list"></div>
                 </div>

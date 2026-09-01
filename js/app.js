@@ -538,7 +538,21 @@
 
     // --- Admin: Volunteer Profile ---
 
+    let currentProfileName = '';
+    let profileFilteredLogs = [];
+
     function showVolunteerProfile(name) {
+        currentProfileName = name;
+        profileFilteredLogs = [];
+
+        // Reset the profile export UI
+        const pf = document.getElementById('profile-filtered-results');
+        if (pf) pf.style.display = 'none';
+        const pFrom = document.getElementById('profile-export-from');
+        const pTo = document.getElementById('profile-export-to');
+        if (pFrom) pFrom.value = '';
+        if (pTo) pTo.value = '';
+
         // Show the profile tab
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.getElementById('tab-profile').classList.add('active');
@@ -657,6 +671,119 @@
         const months = ['', 'January', 'February', 'March', 'April', 'May', 'June',
                         'July', 'August', 'September', 'October', 'November', 'December'];
         return `${months[month]} ${year}`;
+    }
+
+    // --- Profile: per-person date-range export ---
+
+    async function renderProfileFilteredResults() {
+        const fromInput = document.getElementById('profile-export-from');
+        const toInput = document.getElementById('profile-export-to');
+
+        if (!fromInput.value || !toInput.value) {
+            alert('Please select both a start and end date.');
+            return;
+        }
+
+        await loadLogs();
+
+        const from = new Date(fromInput.value + 'T00:00:00');
+        const to = new Date(toInput.value + 'T23:59:59');
+
+        profileFilteredLogs = logs.filter(l => {
+            if (l.name.toLowerCase() !== currentProfileName.toLowerCase()) return false;
+            const parts = l.date.split('/');
+            if (parts.length !== 3) return false;
+            const logDate = new Date(parts[2], parts[0] - 1, parts[1]);
+            return logDate >= from && logDate <= to;
+        });
+
+        // Sort by date ascending
+        profileFilteredLogs.sort((a, b) => parseDateStr(a.date) - parseDateStr(b.date));
+
+        const resultsDiv = document.getElementById('profile-filtered-results');
+        const summaryDiv = document.getElementById('profile-filtered-summary');
+        const tbody = document.getElementById('profile-records-table-body');
+
+        if (profileFilteredLogs.length === 0) {
+            resultsDiv.style.display = 'block';
+            summaryDiv.textContent = 'No records found for this date range.';
+            tbody.innerHTML = '';
+            return;
+        }
+
+        const totalHours = profileFilteredLogs.reduce((sum, l) => sum + (parseFloat(l.hours) || 0), 0);
+        summaryDiv.textContent = `${profileFilteredLogs.length} shifts | ${Math.round(totalHours * 100) / 100} total hours`;
+
+        tbody.innerHTML = profileFilteredLogs.map(l => `
+            <tr>
+                <td>${escapeHtml(l.date)}</td>
+                <td>${escapeHtml(l.clockIn)}</td>
+                <td>${l.clockOut ? escapeHtml(l.clockOut) : 'Still in'}</td>
+                <td>${l.hours ? l.hours + ' hrs' : '-'}</td>
+            </tr>
+        `).join('');
+
+        resultsDiv.style.display = 'block';
+    }
+
+    function printProfileRecords() {
+        if (profileFilteredLogs.length === 0) {
+            alert('No records to print. Use the date filter first.');
+            return;
+        }
+
+        const fromInput = document.getElementById('profile-export-from');
+        const toInput = document.getElementById('profile-export-to');
+        const totalHours = profileFilteredLogs.reduce((sum, l) => sum + (parseFloat(l.hours) || 0), 0);
+
+        const rows = profileFilteredLogs.map(l => `<tr>
+            <td>${escapeHtml(l.date)}</td>
+            <td>${escapeHtml(l.clockIn)}</td>
+            <td>${l.clockOut ? escapeHtml(l.clockOut) : 'Still in'}</td>
+            <td>${l.hours || '-'}</td>
+        </tr>`).join('');
+
+        const existingPrint = document.getElementById('print-area');
+        if (existingPrint) existingPrint.remove();
+
+        const printArea = document.createElement('div');
+        printArea.id = 'print-area';
+        printArea.innerHTML = `
+            <div class="print-header">
+                <h2>ICNA Relief — Volunteer Hours Report</h2>
+                <p><strong>${escapeHtml(currentProfileName)}</strong></p>
+                <p>${fromInput.value} to ${toInput.value}</p>
+            </div>
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Clock In</th>
+                        <th>Clock Out</th>
+                        <th>Hours</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="print-summary">
+                <p><strong>Total Shifts:</strong> ${profileFilteredLogs.length} | <strong>Total Hours:</strong> ${Math.round(totalHours * 100) / 100}</p>
+            </div>
+        `;
+
+        document.body.appendChild(printArea);
+        window.print();
+        setTimeout(() => { printArea.remove(); }, 1000);
+    }
+
+    function exportProfileCSV() {
+        if (profileFilteredLogs.length === 0) {
+            alert('No records to export. Use the date filter first.');
+            return;
+        }
+        const from = document.getElementById('profile-export-from').value;
+        const to = document.getElementById('profile-export-to').value;
+        const safeName = currentProfileName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+        exportCSV(profileFilteredLogs, `icna-${safeName}-${from}-to-${to}.csv`);
     }
 
     async function addVolunteer(name) {
@@ -1420,6 +1547,19 @@
                 }
             });
             renderManageVolunteers();
+        });
+
+        // Profile per-person export
+        document.getElementById('btn-profile-filter').addEventListener('click', () => {
+            renderProfileFilteredResults();
+        });
+
+        document.getElementById('btn-profile-print').addEventListener('click', () => {
+            printProfileRecords();
+        });
+
+        document.getElementById('btn-profile-export-csv').addEventListener('click', () => {
+            exportProfileCSV();
         });
 
         // Export all
