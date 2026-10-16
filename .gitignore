@@ -1,0 +1,13 @@
+# Persistent browser profile — contains login session, never commit
+.browser-profile-google/
+.browser-profile/
+
+# macOS
+.DS_Store
+
+# Local setup/automation scripts (not part of the deployed app)
+login_google.py
+setup-sheet.scpt
+setup_google_sheet.py
+setup_sheet.py
+setup_sheets.py
