@@ -289,7 +289,7 @@
 
     function updateFooterCount() {
         const clockedInCount = volunteers.filter(v => v.clockedIn).length;
-        els.footerCount.textContent = `${clockedInCount} volunteer${clockedInCount !== 1 ? 's' : ''} clocked in`;
+        els.footerCount.textContent = `${clockedInCount} volunteer${clockedInCount !== 1 ? 's' : ''} clocked in right now`;
     }
 
     // --- Clock In / Out Logic ---
@@ -818,7 +818,7 @@
     }
 
     async function removeVolunteer(name) {
-        if (!confirm(`Remove ${name} from the volunteer list?`)) return;
+        if (!confirm(`Remove ${name} from the volunteer list? This cannot be undone.`)) return;
 
         if (isOnlineMode()) {
             const result = await apiPost({ action: 'removeVolunteer', name: name });
@@ -1164,8 +1164,8 @@
                         </div>
                     </div>
                     <div class="day-record-actions">
-                        <button class="btn btn-small btn-primary btn-save-day-record" data-index="${item.index}" aria-label="Save">Save</button>
-                        <button class="btn btn-small btn-danger btn-delete-day-record" data-index="${item.index}" aria-label="Delete">Delete</button>
+                        <button class="btn btn-small btn-primary btn-save-day-record" data-index="${item.index}" aria-label="Save changes">Save Changes</button>
+                        <button class="btn btn-small btn-danger btn-delete-day-record" data-index="${item.index}" aria-label="Delete this shift">🗑️ Delete Shift</button>
                     </div>
                 </div>
             `).join('');
@@ -1239,7 +1239,7 @@
     }
 
     async function deleteDayRecord(logIndex) {
-        if (!confirm('Delete this shift?')) return;
+        if (!confirm('Delete this shift? This cannot be undone.')) return;
 
         const record = logs[logIndex];
 

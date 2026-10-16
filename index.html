@@ -27,16 +27,16 @@
 
         <div class="action-container">
             <div class="unlock-icon" aria-hidden="true">🔒</div>
-            <h2 class="action-name">Kiosk Locked</h2>
-            <p class="action-status">Staff: enter the daily password to unlock</p>
+            <h2 class="action-name">Kiosk is Locked</h2>
+            <p class="action-status">Staff only — type the daily password below, then tap Unlock</p>
 
             <div class="admin-login-form">
-                <input type="password" id="unlock-password" class="admin-password-input" placeholder="Password" aria-label="Unlock password">
-                <p id="unlock-password-error" class="password-error" style="display:none;">Incorrect password</p>
+                <input type="password" id="unlock-password" class="admin-password-input" placeholder="Type password here" aria-label="Unlock password">
+                <p id="unlock-password-error" class="password-error" style="display:none;">❌ Wrong password — please try again</p>
             </div>
 
             <div class="action-buttons">
-                <button id="btn-unlock" class="btn btn-large btn-primary" aria-label="Unlock">Unlock</button>
+                <button id="btn-unlock" class="btn btn-large btn-primary" aria-label="Unlock">Unlock Kiosk</button>
             </div>
         </div>
     </div>
@@ -57,7 +57,7 @@
             <div class="greeting-stats">
                 <span class="greeting-stat">
                     <span class="stat-dot"></span>
-                    <span id="stat-in-count">0 in</span>
+                    <span id="stat-in-count">0 here now</span>
                 </span>
                 <span class="greeting-stat">
                     <span class="stat-dot amber"></span>
@@ -67,7 +67,7 @@
         </div>
 
         <div class="search-bar">
-            <input type="text" id="volunteer-search" placeholder="Search your name..." aria-label="Search volunteer name">
+            <input type="text" id="volunteer-search" placeholder="👤  Type your name to find yourself..." aria-label="Search volunteer name">
         </div>
 
         <div class="volunteer-list" id="volunteer-list" role="list" aria-label="Volunteer list">
@@ -75,7 +75,7 @@
         </div>
 
         <footer class="app-footer">
-            <button id="btn-admin" class="btn btn-small btn-secondary" aria-label="Admin panel">Admin</button>
+            <button id="btn-admin" class="btn btn-small btn-secondary" aria-label="Admin panel">⚙️ Admin</button>
             <span class="footer-count" id="footer-count">0 volunteers clocked in</span>
         </footer>
     </div>
@@ -93,11 +93,11 @@
             <p id="action-time-info" class="action-time-info"></p>
 
             <div class="action-buttons">
-                <button id="btn-clock-in" class="btn btn-large btn-clock-in" aria-label="Clock In">Clock In</button>
-                <button id="btn-clock-out" class="btn btn-large btn-clock-out" aria-label="Clock Out">Clock Out</button>
+                <button id="btn-clock-in" class="btn btn-large btn-clock-in" aria-label="Clock In">✅ Clock In</button>
+                <button id="btn-clock-out" class="btn btn-large btn-clock-out" aria-label="Clock Out">👋 Clock Out</button>
             </div>
 
-            <button id="btn-back" class="btn btn-medium btn-secondary" aria-label="Go back">Back</button>
+            <button id="btn-back" class="btn btn-medium btn-secondary" aria-label="Go back">← That's Not Me — Go Back</button>
         </div>
     </div>
 
@@ -115,6 +115,7 @@
             <div class="confirmation-progress">
                 <div class="confirmation-progress-bar"></div>
             </div>
+            <p class="confirmation-returning">Returning to the volunteer list in 3 seconds...</p>
         </div>
     </div>
 
@@ -125,19 +126,19 @@
         </header>
 
         <div class="action-container">
-            <h2 class="action-name">Admin Access</h2>
-            <p class="action-status">Enter the admin password</p>
+            <h2 class="action-name">Admin Area</h2>
+            <p class="action-status">This area is for staff only. Enter the admin password to continue.</p>
 
             <div class="admin-login-form">
-                <input type="password" id="admin-password" class="admin-password-input" placeholder="Password" aria-label="Admin password">
-                <p id="admin-password-error" class="password-error" style="display:none;">Incorrect password</p>
+                <input type="password" id="admin-password" class="admin-password-input" placeholder="Type admin password here" aria-label="Admin password">
+                <p id="admin-password-error" class="password-error" style="display:none;">❌ Wrong password — please try again</p>
             </div>
 
             <div class="action-buttons">
-                <button id="btn-admin-login" class="btn btn-large btn-primary" aria-label="Enter admin">Enter</button>
+                <button id="btn-admin-login" class="btn btn-large btn-primary" aria-label="Enter admin">Enter Admin Area</button>
             </div>
 
-            <button id="btn-admin-login-back" class="btn btn-medium btn-secondary" aria-label="Go back">Back</button>
+            <button id="btn-admin-login-back" class="btn btn-medium btn-secondary" aria-label="Go back">← Go Back</button>
         </div>
     </div>
 
@@ -145,44 +146,47 @@
     <div id="screen-admin" class="screen">
         <header class="app-header">
             <h1>ICNA Relief — Admin</h1>
-            <button id="btn-admin-back" class="btn btn-small btn-secondary header-back-btn" aria-label="Back to main">Back</button>
+            <button id="btn-admin-back" class="btn btn-small btn-secondary header-back-btn" aria-label="Back to main">← Back to Kiosk</button>
         </header>
 
         <div class="admin-container">
             <div class="admin-tabs" role="tablist">
-                <button class="tab active" data-tab="tab-currently-in" role="tab" aria-selected="true">Currently In</button>
-                <button class="tab" data-tab="tab-log" role="tab" aria-selected="false">Today's Log</button>
-                <button class="tab" data-tab="tab-manage" role="tab" aria-selected="false">Manage Volunteers</button>
-                <button class="tab" data-tab="tab-export" role="tab" aria-selected="false">Export Data</button>
-                <button class="tab" data-tab="tab-settings" role="tab" aria-selected="false">Settings</button>
+                <button class="tab active" data-tab="tab-currently-in" role="tab" aria-selected="true">👥 Who's Here Now</button>
+                <button class="tab" data-tab="tab-log" role="tab" aria-selected="false">📋 Today's Activity</button>
+                <button class="tab" data-tab="tab-manage" role="tab" aria-selected="false">➕ Add / Remove Volunteers</button>
+                <button class="tab" data-tab="tab-export" role="tab" aria-selected="false">📥 Download Records</button>
+                <button class="tab" data-tab="tab-settings" role="tab" aria-selected="false">⚙️ Settings</button>
             </div>
 
-            <!-- Currently Clocked In -->
+            <!-- Who's Here Now -->
             <div id="tab-currently-in" class="tab-content active" role="tabpanel">
-                <h3>Volunteers Currently Clocked In</h3>
+                <h3>👥 Volunteers Who Are Here Right Now</h3>
                 <div id="currently-in-list" class="admin-list"></div>
             </div>
 
-            <!-- Today's Log -->
+            <!-- Today's Activity -->
             <div id="tab-log" class="tab-content" role="tabpanel">
-                <h3>Today's Activity Log</h3>
+                <h3>📋 Everything That Happened Today</h3>
                 <div id="today-log-list" class="admin-list"></div>
             </div>
 
-            <!-- Manage Volunteers -->
+            <!-- Add / Remove Volunteers -->
             <div id="tab-manage" class="tab-content" role="tabpanel">
-                <h3>Add / Remove Volunteers</h3>
+                <h3>➕ Add a New Volunteer or Remove One</h3>
+
+                <div class="manage-section-label">Add a new volunteer</div>
                 <div class="manage-add-form">
-                    <input type="text" id="new-volunteer-name" placeholder="Enter volunteer name" aria-label="New volunteer name">
-                    <button id="btn-add-volunteer" class="btn btn-medium btn-primary" aria-label="Add volunteer">Add</button>
+                    <input type="text" id="new-volunteer-name" placeholder="Type their full name here" aria-label="New volunteer name">
+                    <button id="btn-add-volunteer" class="btn btn-medium btn-primary" aria-label="Add volunteer">Add Volunteer</button>
                 </div>
-                <p class="manage-hint">Tap a name to view their profile</p>
+
+                <p class="manage-hint">👆 Tap any name below to see their hours, edit their shifts, or remove them</p>
                 <div id="manage-volunteer-list" class="admin-list"></div>
             </div>
 
             <!-- Volunteer Profile -->
             <div id="tab-profile" class="tab-content" role="tabpanel">
-                <button id="btn-profile-back" class="btn btn-small btn-secondary" aria-label="Back to manage" style="margin-bottom:1rem;">← Back</button>
+                <button id="btn-profile-back" class="btn btn-small btn-secondary" aria-label="Back to volunteer list" style="margin-bottom:1rem;">← Back to Volunteer List</button>
                 <div class="profile-header">
                     <div class="profile-avatar" id="profile-avatar"></div>
                     <h3 id="profile-name" class="profile-name"></h3>
@@ -200,22 +204,22 @@
                     </div>
                     <div class="stat-card">
                         <span class="stat-value" id="profile-avg-hours">0</span>
-                        <span class="stat-label">Avg Hours/Shift</span>
+                        <span class="stat-label">Avg Hrs / Shift</span>
                     </div>
                 </div>
 
                 <div class="profile-section">
-                    <h4>Edit Shifts — Calendar</h4>
-                    <p class="profile-cal-hint">Green days have shifts. Tap any day to view, add, edit, or delete.</p>
+                    <h4>📅 View &amp; Edit This Person's Shifts</h4>
+                    <p class="profile-cal-hint">Green days = they worked that day. Tap any day to view, add, edit, or delete a shift.</p>
 
                     <div class="calendar-jump">
-                        <label for="cal-jump-date">Jump to date</label>
+                        <label for="cal-jump-date">Go directly to a specific date</label>
                         <input type="date" id="cal-jump-date" aria-label="Jump to a specific date">
                     </div>
 
                     <div id="calendar-container">
                         <div class="calendar-nav">
-                            <button id="btn-cal-prev" class="btn btn-small btn-secondary" aria-label="Previous month">←</button>
+                            <button id="btn-cal-prev" class="btn btn-small btn-secondary" aria-label="Previous month">← Previous Month</button>
                             <div class="calendar-month-select">
                                 <select id="cal-month-select" class="cal-jump-select" aria-label="Select month">
                                     <option value="0">January</option>
@@ -233,7 +237,7 @@
                                 </select>
                                 <select id="cal-year-select" class="cal-jump-select" aria-label="Select year"></select>
                             </div>
-                            <button id="btn-cal-next" class="btn btn-small btn-secondary" aria-label="Next month">→</button>
+                            <button id="btn-cal-next" class="btn btn-small btn-secondary" aria-label="Next month">Next Month →</button>
                         </div>
 
                         <div class="calendar-grid">
@@ -246,21 +250,21 @@
                         <div id="calendar-day-detail" class="calendar-day-detail" style="display:none;">
                             <div class="day-detail-header">
                                 <h4 id="day-detail-title"></h4>
-                                <button id="btn-close-day-detail" class="btn btn-small btn-secondary" aria-label="Close">Close</button>
+                                <button id="btn-close-day-detail" class="btn btn-small btn-secondary" aria-label="Close">✕ Close</button>
                             </div>
                             <div id="day-detail-records" class="day-detail-records"></div>
                             <div class="day-detail-add">
-                                <h5>Add Shift</h5>
+                                <h5>➕ Add a New Shift for This Day</h5>
                                 <div class="edit-form-row">
                                     <div class="edit-field">
-                                        <label for="cal-new-clockin">Clock In</label>
+                                        <label for="cal-new-clockin">Clock In Time</label>
                                         <input type="time" id="cal-new-clockin" aria-label="Clock in time">
                                     </div>
                                     <div class="edit-field">
-                                        <label for="cal-new-clockout">Clock Out</label>
+                                        <label for="cal-new-clockout">Clock Out Time</label>
                                         <input type="time" id="cal-new-clockout" aria-label="Clock out time">
                                     </div>
-                                    <button id="btn-cal-add-record" class="btn btn-medium btn-primary" aria-label="Add shift">Add</button>
+                                    <button id="btn-cal-add-record" class="btn btn-medium btn-primary" aria-label="Save new shift">Save Shift</button>
                                 </div>
                             </div>
                         </div>
@@ -268,18 +272,18 @@
                 </div>
 
                 <div class="profile-section">
-                    <h4>Export This Volunteer's Hours</h4>
-                    <p class="profile-cal-hint">Pick a date range, then print or download just this person's records.</p>
+                    <h4>📥 Print or Download This Person's Hours</h4>
+                    <p class="profile-cal-hint">Choose a start and end date, then print or save as a spreadsheet file.</p>
                     <div class="date-range-picker">
                         <div class="date-field">
-                            <label for="profile-export-from">From</label>
+                            <label for="profile-export-from">Start Date</label>
                             <input type="date" id="profile-export-from" aria-label="Start date">
                         </div>
                         <div class="date-field">
-                            <label for="profile-export-to">To</label>
+                            <label for="profile-export-to">End Date</label>
                             <input type="date" id="profile-export-to" aria-label="End date">
                         </div>
-                        <button id="btn-profile-filter" class="btn btn-medium btn-primary" aria-label="Show records">Show</button>
+                        <button id="btn-profile-filter" class="btn btn-medium btn-primary" aria-label="Show records">Show Records</button>
                     </div>
 
                     <div id="profile-filtered-results" class="filtered-results" style="display:none;">
@@ -296,38 +300,38 @@
                             <tbody id="profile-records-table-body"></tbody>
                         </table>
                         <div class="filtered-actions">
-                            <button id="btn-profile-print" class="btn btn-large btn-primary" aria-label="Print records">Print</button>
-                            <button id="btn-profile-export-csv" class="btn btn-large btn-secondary" aria-label="Download CSV">Download CSV</button>
+                            <button id="btn-profile-print" class="btn btn-large btn-primary" aria-label="Print records">🖨️ Print</button>
+                            <button id="btn-profile-export-csv" class="btn btn-large btn-secondary" aria-label="Download CSV">💾 Download as Spreadsheet</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="profile-section">
-                    <h4>Monthly Hours</h4>
+                    <h4>📆 Hours by Month</h4>
                     <div id="profile-monthly-hours" class="monthly-hours-list"></div>
                 </div>
 
                 <div class="profile-section">
-                    <h4>Recent Activity</h4>
+                    <h4>🕐 Recent Shifts</h4>
                     <div id="profile-recent-activity" class="admin-list"></div>
                 </div>
             </div>
 
-            <!-- Export Data -->
+            <!-- Download Records -->
             <div id="tab-export" class="tab-content" role="tabpanel">
-                <h3>Export &amp; Print Records</h3>
-                <p class="export-description">Pick a date range to view, print, or download volunteer hours.</p>
+                <h3>📥 Download or Print Volunteer Records</h3>
+                <p class="export-description">Choose a start and end date to see records for all volunteers. Then print them or save as a spreadsheet file.</p>
 
                 <div class="date-range-picker">
                     <div class="date-field">
-                        <label for="export-date-from">From</label>
+                        <label for="export-date-from">Start Date</label>
                         <input type="date" id="export-date-from" aria-label="Start date">
                     </div>
                     <div class="date-field">
-                        <label for="export-date-to">To</label>
+                        <label for="export-date-to">End Date</label>
                         <input type="date" id="export-date-to" aria-label="End date">
                     </div>
-                    <button id="btn-filter-dates" class="btn btn-medium btn-primary" aria-label="Show records">Show</button>
+                    <button id="btn-filter-dates" class="btn btn-medium btn-primary" aria-label="Show records">Show Records</button>
                 </div>
 
                 <div id="filtered-results" class="filtered-results" style="display:none;">
@@ -345,13 +349,13 @@
                         <tbody id="records-table-body"></tbody>
                     </table>
                     <div class="filtered-actions">
-                        <button id="btn-print-filtered" class="btn btn-large btn-primary" aria-label="Print these records">Print</button>
-                        <button id="btn-export-filtered" class="btn btn-large btn-secondary" aria-label="Download CSV">Download CSV</button>
+                        <button id="btn-print-filtered" class="btn btn-large btn-primary" aria-label="Print these records">🖨️ Print</button>
+                        <button id="btn-export-filtered" class="btn btn-large btn-secondary" aria-label="Download CSV">💾 Download as Spreadsheet</button>
                     </div>
                 </div>
 
                 <div class="export-options" style="margin-top:1.5rem;">
-                    <button id="btn-export-all" class="btn btn-medium btn-secondary" aria-label="Export all records">Export All Records (CSV)</button>
+                    <button id="btn-export-all" class="btn btn-medium btn-secondary" aria-label="Export all records">💾 Download All Records Ever</button>
                 </div>
 
                 <div id="export-stats" class="export-stats"></div>
@@ -359,30 +363,30 @@
 
             <!-- Settings -->
             <div id="tab-settings" class="tab-content" role="tabpanel">
-                <h3>Settings</h3>
+                <h3>⚙️ Settings &amp; Passwords</h3>
 
                 <div class="settings-section">
-                    <h4>Change Daily Unlock Password</h4>
-                    <p class="settings-description">This is the password staff enters each morning to open the kiosk.</p>
+                    <h4>Change the Daily Unlock Password</h4>
+                    <p class="settings-description">This is the password staff types each morning to open the kiosk for volunteers.</p>
                     <div class="settings-form">
-                        <input type="password" id="settings-new-unlock" class="settings-input" placeholder="New unlock password" aria-label="New unlock password">
+                        <input type="password" id="settings-new-unlock" class="settings-input" placeholder="Type new unlock password" aria-label="New unlock password">
                         <button id="btn-save-unlock-pw" class="btn btn-medium btn-primary" aria-label="Save unlock password">Save</button>
                     </div>
-                    <p id="unlock-pw-saved" class="settings-saved" style="display:none;">Unlock password updated.</p>
+                    <p id="unlock-pw-saved" class="settings-saved" style="display:none;">✅ Unlock password updated.</p>
                 </div>
 
                 <div class="settings-section">
-                    <h4>Change Admin Password</h4>
-                    <p class="settings-description">This is the password to access this admin panel.</p>
+                    <h4>Change the Admin Password</h4>
+                    <p class="settings-description">This is the password used to enter this admin area.</p>
                     <div class="settings-form">
-                        <input type="password" id="settings-new-admin" class="settings-input" placeholder="New admin password" aria-label="New admin password">
+                        <input type="password" id="settings-new-admin" class="settings-input" placeholder="Type new admin password" aria-label="New admin password">
                         <button id="btn-save-admin-pw" class="btn btn-medium btn-primary" aria-label="Save admin password">Save</button>
                     </div>
-                    <p id="admin-pw-saved" class="settings-saved" style="display:none;">Admin password updated.</p>
+                    <p id="admin-pw-saved" class="settings-saved" style="display:none;">✅ Admin password updated.</p>
                 </div>
 
                 <div class="settings-section">
-                    <h4>Current Passwords</h4>
+                    <h4>View Current Passwords</h4>
                     <div class="settings-current-pw">
                         <p><strong>Unlock password:</strong> <span id="display-unlock-pw">••••</span> <button id="btn-show-unlock-pw" class="btn-show-pw" aria-label="Show password">Show</button></p>
                         <p><strong>Admin password:</strong> <span id="display-admin-pw">••••</span> <button id="btn-show-admin-pw" class="btn-show-pw" aria-label="Show password">Show</button></p>
