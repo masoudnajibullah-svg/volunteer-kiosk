@@ -1062,6 +1062,15 @@ body {
     .footer-count {
         font-size: 0.82rem;
     }
+
+    .help-box {
+        margin: 0.6rem 0.6rem;
+        padding: 0.75rem 0.9rem;
+    }
+
+    .help-box-text {
+        font-size: 0.92rem;
+    }
 }
 
 /* === TABLET (iPad portrait) === */
@@ -1709,6 +1718,40 @@ body {
     color: var(--slate-400);
     margin-top: 0.5rem;
     font-style: italic;
+}
+
+/* === HELP BOXES (instructions for older users) === */
+.help-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    background: #fffbeb;
+    border: 1.5px solid #fde68a;
+    border-left: 5px solid var(--amber-500);
+    border-radius: var(--radius-md);
+    padding: 0.9rem 1.1rem;
+    margin: 0.8rem 1rem;
+}
+
+.help-box-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    line-height: 1.3;
+}
+
+.help-box-text {
+    font-size: 1rem;
+    line-height: 1.55;
+    color: #78350f;
+}
+
+.help-box-text strong {
+    color: #713f12;
+}
+
+/* On admin screens the help box sits inside padded tab content */
+.tab-content .help-box {
+    margin: 0 0 1rem 0;
 }
 
 .manage-section-label {

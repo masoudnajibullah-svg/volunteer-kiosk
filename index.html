@@ -66,6 +66,11 @@
             </div>
         </div>
 
+        <div class="help-box">
+            <span class="help-box-icon">👉</span>
+            <span class="help-box-text"><strong>How to clock in or out:</strong> Find your name in the list below and tap it. Then tap the big green <strong>Clock In</strong> button when you arrive, or the red <strong>Clock Out</strong> button when you leave.</span>
+        </div>
+
         <div class="search-bar">
             <input type="text" id="volunteer-search" placeholder="👤  Type your name to find yourself..." aria-label="Search volunteer name">
         </div>
@@ -161,18 +166,35 @@
             <!-- Who's Here Now -->
             <div id="tab-currently-in" class="tab-content active" role="tabpanel">
                 <h3>👥 Volunteers Who Are Here Right Now</h3>
+                <div class="help-box">
+                    <span class="help-box-icon">ℹ️</span>
+                    <span class="help-box-text">This shows everyone who has clocked in but not yet clocked out. It also shows how long they have been here today.</span>
+                </div>
                 <div id="currently-in-list" class="admin-list"></div>
             </div>
 
             <!-- Today's Activity -->
             <div id="tab-log" class="tab-content" role="tabpanel">
                 <h3>📋 Everything That Happened Today</h3>
+                <div class="help-box">
+                    <span class="help-box-icon">ℹ️</span>
+                    <span class="help-box-text">This is a list of every clock in and clock out that happened today, with the times and total hours for each person.</span>
+                </div>
                 <div id="today-log-list" class="admin-list"></div>
             </div>
 
             <!-- Add / Remove Volunteers -->
             <div id="tab-manage" class="tab-content" role="tabpanel">
                 <h3>➕ Add a New Volunteer or Remove One</h3>
+
+                <div class="help-box">
+                    <span class="help-box-icon">ℹ️</span>
+                    <span class="help-box-text">
+                        <strong>To add someone:</strong> type their full name in the box and tap <strong>Add Volunteer</strong>.<br>
+                        <strong>To remove someone:</strong> tap the red <strong>Remove</strong> button next to their name.<br>
+                        <strong>To fix or edit someone's hours:</strong> tap their <strong>name</strong> in the list. That opens their page where you can see a calendar, add a missed shift, change a time, delete a shift, or print their hours.
+                    </span>
+                </div>
 
                 <div class="manage-section-label">Add a new volunteer</div>
                 <div class="manage-add-form">
@@ -187,6 +209,10 @@
             <!-- Volunteer Profile -->
             <div id="tab-profile" class="tab-content" role="tabpanel">
                 <button id="btn-profile-back" class="btn btn-small btn-secondary" aria-label="Back to volunteer list" style="margin-bottom:1rem;">← Back to Volunteer List</button>
+                <div class="help-box">
+                    <span class="help-box-icon">ℹ️</span>
+                    <span class="help-box-text">This is this person's page. You can see their total hours, add or fix shifts using the calendar below, and print their hours. <strong>Green days</strong> on the calendar are days they worked — tap a day to change it.</span>
+                </div>
                 <div class="profile-header">
                     <div class="profile-avatar" id="profile-avatar"></div>
                     <h3 id="profile-name" class="profile-name"></h3>
@@ -320,6 +346,10 @@
             <!-- Download Records -->
             <div id="tab-export" class="tab-content" role="tabpanel">
                 <h3>📥 Download or Print Volunteer Records</h3>
+                <div class="help-box">
+                    <span class="help-box-icon">ℹ️</span>
+                    <span class="help-box-text">Pick a <strong>Start Date</strong> and <strong>End Date</strong>, then tap <strong>Show Records</strong>. You can then tap <strong>Print</strong> to print them, or <strong>Download as Spreadsheet</strong> to save a file you can open in Excel or Google Sheets. This covers all volunteers at once.</span>
+                </div>
                 <p class="export-description">Choose a start and end date to see records for all volunteers. Then print them or save as a spreadsheet file.</p>
 
                 <div class="date-range-picker">
@@ -364,6 +394,11 @@
             <!-- Settings -->
             <div id="tab-settings" class="tab-content" role="tabpanel">
                 <h3>⚙️ Settings &amp; Passwords</h3>
+
+                <div class="help-box">
+                    <span class="help-box-icon">ℹ️</span>
+                    <span class="help-box-text">Here you can change the two passwords. The <strong>unlock password</strong> is what staff types each morning to open the kiosk for volunteers. The <strong>admin password</strong> is what opens this admin area. Type a new password and tap <strong>Save</strong>.</span>
+                </div>
 
                 <div class="settings-section">
                     <h4>Change the Daily Unlock Password</h4>
