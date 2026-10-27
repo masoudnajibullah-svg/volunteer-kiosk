@@ -202,6 +202,13 @@
     function showScreen(screenName) {
         Object.values(screens).forEach(s => s.classList.remove('active'));
         screens[screenName].classList.add('active');
+
+        // Let the whole page scroll on the main volunteer screen; keep other
+        // screens locked to the viewport (kiosk style).
+        document.body.classList.toggle('main-active', screenName === 'main');
+
+        // Scroll back to top whenever we switch screens
+        window.scrollTo(0, 0);
     }
 
     // --- Clock Display ---

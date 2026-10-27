@@ -62,6 +62,29 @@ body {
     -webkit-user-select: none;
 }
 
+/* When the main volunteer screen is showing, let the whole page scroll
+   naturally instead of locking to the viewport. */
+body.main-active {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.main-active #screen-main {
+    position: static;
+    height: auto;
+    min-height: 100dvh;
+}
+
+body.main-active #screen-main .volunteer-list {
+    flex: none;
+    overflow: visible;
+}
+
+body.main-active #screen-main .app-footer {
+    position: sticky;
+    bottom: 0;
+}
+
 /* === SCREENS === */
 .screen {
     display: none;
