@@ -257,11 +257,8 @@
             ? volunteers.filter(v => v.name.toLowerCase().includes(searchTerm))
             : volunteers;
 
-        // Always sort alphabetically
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-
         if (filtered.length === 0 && volunteers.length === 0) {
-            els.volunteerList.innerHTML = '<div class="empty-state">No volunteers added yet.<br>Go to Admin → Manage Volunteers to add names.</div>';
+            els.volunteerList.innerHTML = '<div class="empty-state">No volunteers added yet.<br>Go to Admin → Add / Remove Volunteers to add names.</div>';
             updateFooterCount();
             return;
         }
@@ -272,17 +269,37 @@
             return;
         }
 
-        els.volunteerList.innerHTML = filtered.map(v => `
-            <div class="volunteer-item" data-name="${escapeHtml(v.name)}" role="listitem" tabindex="0">
-                <div class="vol-info">
-                    <div class="vol-avatar">${getInitials(v.name)}</div>
-                    <span class="vol-name">${escapeHtml(v.name)}</span>
+        // Split into clocked-in (top) and not-in (below), each alphabetical.
+        const clockedIn = filtered.filter(v => v.clockedIn).sort((a, b) => a.name.localeCompare(b.name));
+        const notIn = filtered.filter(v => !v.clockedIn).sort((a, b) => a.name.localeCompare(b.name));
+
+        function row(v) {
+            return `
+                <div class="volunteer-item ${v.clockedIn ? 'is-clocked-in' : ''}" data-name="${escapeHtml(v.name)}" role="listitem" tabindex="0">
+                    <div class="vol-info">
+                        <div class="vol-avatar">${getInitials(v.name)}</div>
+                        <span class="vol-name">${escapeHtml(v.name)}</span>
+                    </div>
+                    <span class="vol-status ${v.clockedIn ? 'status-in' : 'status-out'}">
+                        ${v.clockedIn ? '🟢 Here — tap to Clock Out' : 'Tap to Clock In'}
+                    </span>
                 </div>
-                <span class="vol-status ${v.clockedIn ? 'status-in' : 'status-out'}">
-                    ${v.clockedIn ? 'Clocked In' : 'Not In'}
-                </span>
-            </div>
-        `).join('');
+            `;
+        }
+
+        let html = '';
+
+        if (clockedIn.length > 0) {
+            html += `<div class="list-divider list-divider-in">✅ Here Now — tap your name to Clock Out (${clockedIn.length})</div>`;
+            html += clockedIn.map(row).join('');
+        }
+
+        if (notIn.length > 0) {
+            html += `<div class="list-divider">Everyone Else — tap your name to Clock In</div>`;
+            html += notIn.map(row).join('');
+        }
+
+        els.volunteerList.innerHTML = html;
 
         updateFooterCount();
     }
@@ -531,7 +548,10 @@
         els.manageVolunteerList.innerHTML = sorted.map(v => `
             <div class="admin-list-item manage-item">
                 <div class="item-name clickable-name" data-name="${escapeHtml(v.name)}">${escapeHtml(v.name)}</div>
-                <button class="btn-remove" data-name="${escapeHtml(v.name)}" aria-label="Remove ${escapeHtml(v.name)}">Remove</button>
+                <div class="manage-item-actions">
+                    <button class="btn btn-small btn-primary btn-edit-hours" data-name="${escapeHtml(v.name)}" aria-label="Edit hours for ${escapeHtml(v.name)}">✏️ Edit Hours</button>
+                    <button class="btn-remove" data-name="${escapeHtml(v.name)}" aria-label="Remove ${escapeHtml(v.name)}">Remove</button>
+                </div>
             </div>
         `).join('');
     }
@@ -1149,7 +1169,7 @@
         const recordsContainer = document.getElementById('day-detail-records');
 
         if (dayLogs.length === 0) {
-            recordsContainer.innerHTML = '<div class="empty-state">No shifts on this day</div>';
+            recordsContainer.innerHTML = '<div class="empty-state">No shifts on this day yet.<br>To add one, use the "Add a New Shift" box below. 👇</div>';
         } else {
             recordsContainer.innerHTML = dayLogs.map(item => `
                 <div class="day-record-item" data-index="${item.index}">
@@ -1522,6 +1542,14 @@
             if (btn) {
                 e.stopPropagation();
                 removeVolunteer(btn.dataset.name);
+                return;
+            }
+
+            // "Edit Hours" button — open the person's profile (same as tapping name)
+            const editBtn = e.target.closest('.btn-edit-hours');
+            if (editBtn) {
+                e.stopPropagation();
+                loadLogs().then(() => showVolunteerProfile(editBtn.dataset.name));
                 return;
             }
 
