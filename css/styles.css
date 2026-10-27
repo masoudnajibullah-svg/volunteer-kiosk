@@ -301,10 +301,22 @@ body {
     flex-shrink: 0;
 }
 
+.volunteer-item .vol-name-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
 .volunteer-item .vol-name {
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--slate-800);
+}
+
+.volunteer-item .vol-since {
+    font-size: 0.82rem;
+    color: var(--green-700);
+    font-weight: 500;
 }
 
 .volunteer-item .vol-status {

@@ -170,6 +170,7 @@
                     if (vol) {
                         vol.clockedIn = true;
                         vol.clockInTime = shift.clockIn;
+                        vol.clockInDate = shift.date;
                     }
                 });
             }
@@ -274,11 +275,17 @@
         const notIn = filtered.filter(v => !v.clockedIn).sort((a, b) => a.name.localeCompare(b.name));
 
         function row(v) {
+            const sinceText = v.clockedIn
+                ? `<span class="vol-since">Clocked in since ${escapeHtml(v.clockInDate || getToday())} at ${escapeHtml(v.clockInTime || '')}</span>`
+                : '';
             return `
                 <div class="volunteer-item ${v.clockedIn ? 'is-clocked-in' : ''}" data-name="${escapeHtml(v.name)}" role="listitem" tabindex="0">
                     <div class="vol-info">
                         <div class="vol-avatar">${getInitials(v.name)}</div>
-                        <span class="vol-name">${escapeHtml(v.name)}</span>
+                        <div class="vol-name-wrap">
+                            <span class="vol-name">${escapeHtml(v.name)}</span>
+                            ${sinceText}
+                        </div>
                     </div>
                     <span class="vol-status ${v.clockedIn ? 'status-in' : 'status-out'}">
                         ${v.clockedIn ? '🟢 Here — tap to Clock Out' : 'Tap to Clock In'}
@@ -318,7 +325,8 @@
 
         if (volunteer.clockedIn) {
             els.actionStatus.textContent = `Currently clocked in`;
-            els.actionTimeInfo.textContent = `Since ${volunteer.clockInTime}`;
+            const sinceDate = volunteer.clockInDate ? `${volunteer.clockInDate} at ` : '';
+            els.actionTimeInfo.textContent = `Since ${sinceDate}${volunteer.clockInTime}`;
             els.btnClockIn.classList.add('hidden');
             els.btnClockOut.classList.remove('hidden');
         } else {
@@ -345,6 +353,7 @@
             if (result && result.success) {
                 volunteer.clockedIn = true;
                 volunteer.clockInTime = result.time;
+                volunteer.clockInDate = result.date || getToday();
                 showConfirmation(volunteer.name, 'in', now);
             } else {
                 alert('Error clocking in. Please try again.');
@@ -354,6 +363,7 @@
             // Local mode
             volunteer.clockedIn = true;
             volunteer.clockInTime = formatTime(now);
+            volunteer.clockInDate = formatDateShort(now);
 
             logs.push({
                 date: formatDateShort(now),
